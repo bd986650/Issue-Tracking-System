@@ -103,7 +103,7 @@ export default function IssueCard({ issue, onEdit, onDelete, onChangeStatus }: I
               key={action}
               onClick={() => onChangeStatus?.(issue.id, action)}
               variant="outline"
-              className={`text-xs ${color} border-0 text-white hover:opacity-80`}
+              className={`text-xs ${color} border-0 text-white`}
             >
               {label}
             </UniversalButton>

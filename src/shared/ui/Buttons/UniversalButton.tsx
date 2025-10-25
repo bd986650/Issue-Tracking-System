@@ -24,7 +24,7 @@ export default function UniversalButton({
   const variantClasses = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:bg-gray-400",
     secondary: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 disabled:bg-gray-400",
-    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+    outline: "border border-gray-300 text-gray-700 hover:opacity-90 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
   };
 
   return (
