@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useProjectStore } from '@/entities/project';
 import { useIssueStore } from '@/entities/issue';
 import { Issue, IssueStatus, IssueType, Priority } from '@/entities/issue';
+import { fetchIssues, submitCreateIssue, submitChangeIssueStatus } from '@/features/issue-management';
+import { CreateIssueRequest } from '@/features/issue-management/model/issueTypes';
 import { Plus, Bug, Zap, AlertCircle, Trash2 } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';
@@ -100,14 +102,12 @@ const IssueCard = ({
 const KanbanColumn = ({ 
   title, 
   issues, 
-  onCreateIssue,
   onIssueClick,
   onDeleteIssue,
   onDrop
 }: { 
   title: string; 
   issues: Issue[]; 
-  onCreateIssue: () => void;
   onIssueClick: (issue: Issue) => void;
   onDeleteIssue: (issueId: number) => void;
   onDrop: (issueId: number, newStatus: IssueStatus) => void;
@@ -126,13 +126,13 @@ const KanbanColumn = ({
 
   const getStatusFromTitle = (title: string): IssueStatus => {
     switch (title) {
-      case 'Open':
+      case 'К выполнению':
         return "OPEN";
-      case 'In Progress':
+      case 'В работе':
         return "IN_PROGRESS";
-      case 'Testing':
+      case 'На тестировании':
         return "TESTING";
-      case 'Done':
+      case 'Выполнено':
         return "DONE";
       default:
         return "OPEN";
@@ -152,13 +152,6 @@ const KanbanColumn = ({
             {issues.length}
           </span>
         </div>
-        <button
-          onClick={onCreateIssue}
-          className="flex items-center gap-1 bg-black text-white px-3 py-1 rounded text-xs hover:bg-gray-800 transition-colors"
-        >
-          <Plus size={14} />
-          Создать
-        </button>
       </div>
       
       <div className="space-y-3">
@@ -179,15 +172,36 @@ export default function KanbanBoard() {
   const { selectedProject } = useProjectStore();
   const { 
     issues, 
-    addIssue, 
+    setIssues,
     updateIssue, 
     removeIssue
   } = useIssueStore();
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<IssueStatus>("OPEN");
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadIssues = useCallback(async () => {
+    if (!selectedProject) return;
+    
+    try {
+      setLoading(true);
+      const issuesData = await fetchIssues(selectedProject.id);
+      setIssues(issuesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка загрузки задач");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedProject, setIssues]);
+
+  useEffect(() => {
+    if (selectedProject) {
+      loadIssues();
+    }
+  }, [selectedProject, loadIssues]);
   
   if (!selectedProject) {
     return (
@@ -195,6 +209,15 @@ export default function KanbanBoard() {
         <AlertCircle size={48} className="text-gray-400 mb-4" />
         <h2 className="text-xl font-semibold text-gray-600 mb-2">Выберите проект</h2>
         <p className="text-gray-500">Для просмотра задач необходимо выбрать проект в боковой панели</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <p className="text-gray-600 mt-4">Загрузка задач...</p>
       </div>
     );
   }
@@ -208,8 +231,7 @@ export default function KanbanBoard() {
     "DONE": allIssues.filter((issue: Issue) => issue.status === "DONE"),
   };
 
-  const handleCreateIssue = (status: IssueStatus) => {
-    setSelectedStatus(status);
+  const handleCreateIssue = () => {
     setIsCreateModalOpen(true);
   };
 
@@ -227,10 +249,33 @@ export default function KanbanBoard() {
     setIsEditModalOpen(true);
   };
 
-  const handleDropIssue = (issueId: number, newStatus: IssueStatus) => {
-    const issue = issues.find(i => i.id === issueId);
-    if (issue) {
-      updateIssue({ ...issue, status: newStatus });
+  const handleDropIssue = async (issueId: number, newStatus: IssueStatus) => {
+    if (!selectedProject) return;
+    
+    try {
+      // Определяем действие на основе нового статуса
+      let action: 'test' | 'progress' | 'done' | 'open';
+      switch (newStatus) {
+        case 'IN_PROGRESS':
+          action = 'progress';
+          break;
+        case 'TESTING':
+          action = 'test';
+          break;
+        case 'DONE':
+          action = 'done';
+          break;
+        case 'OPEN':
+          action = 'open';
+          break;
+        default:
+          return;
+      }
+      
+      await submitChangeIssueStatus(selectedProject.id, issueId, action);
+      await loadIssues(); // Перезагружаем данные
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка изменения статуса");
     }
   };
 
@@ -238,21 +283,27 @@ export default function KanbanBoard() {
     removeIssue(issueId);
   };
 
-  const handleSubmitIssue = (issueData: Partial<Issue>) => {
-    addIssue({
-      ...issueData,
-      status: selectedStatus
-    } as Issue);
-    handleCloseCreateModal();
+  const handleSubmitIssue = async (issueData: CreateIssueRequest) => {
+    if (!selectedProject) return;
+    
+    try {
+      await submitCreateIssue(selectedProject.id, issueData);
+      await loadIssues(); // Перезагружаем данные
+      handleCloseCreateModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка создания задачи");
+    }
   };
 
-  const handleUpdateIssue = (issueData: {
+  const handleUpdateIssue = async (issueData: {
     id: number;
     title: string;
     description: string;
     type: IssueType;
     status: IssueStatus;
   }) => {
+    // Здесь можно добавить API для обновления задачи
+    // Пока используем локальное обновление
     const updatedIssue = {
       id: issueData.id,
       title: issueData.title,
@@ -269,41 +320,50 @@ export default function KanbanBoard() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
         </div>
+        <button
+          onClick={() => handleCreateIssue()}
+          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          <Plus size={16} />
+          Создать задачу
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KanbanColumn
-          title="Open"
+          title="К выполнению"
           issues={issuesByStatus["OPEN"]}
-          onCreateIssue={() => handleCreateIssue("OPEN")}
           onIssueClick={handleIssueClick}
           onDeleteIssue={handleDeleteIssue}
           onDrop={handleDropIssue}
         />
         <KanbanColumn
-          title="In Progress"
+          title="В работе"
           issues={issuesByStatus["IN_PROGRESS"]}
-          onCreateIssue={() => handleCreateIssue("IN_PROGRESS")}
           onIssueClick={handleIssueClick}
           onDeleteIssue={handleDeleteIssue}
           onDrop={handleDropIssue}
         />
         <KanbanColumn
-          title="Testing"
+          title="На тестировании"
           issues={issuesByStatus["TESTING"]}
-          onCreateIssue={() => handleCreateIssue("TESTING")}
           onIssueClick={handleIssueClick}
           onDeleteIssue={handleDeleteIssue}
           onDrop={handleDropIssue}
         />
         <KanbanColumn
-          title="Done"
+          title="Выполнено"
           issues={issuesByStatus["DONE"]}
-          onCreateIssue={() => handleCreateIssue("DONE")}
           onIssueClick={handleIssueClick}
           onDeleteIssue={handleDeleteIssue}
           onDrop={handleDropIssue}
