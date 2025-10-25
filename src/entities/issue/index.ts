@@ -1,2 +1,4 @@
-// Экспорт всех типов задач
+// Экспорт всех модулей issue
 export * from './model/types';
+export * from './model/issueStore';
+export * from './service/issueService';

@@ -10,9 +10,7 @@ export default function RegisterForm() {
     email: "",
     password: "",
     passwordConfirm: "",
-    fullName: "",
-    position: "",
-    location: ""
+    fullName: ""
   });
   const [error, setError] = useState("");
 
@@ -40,7 +38,6 @@ export default function RegisterForm() {
 
       <TextInput type="email" placeholder="Email" value={values.email} onChange={v => handleChange("email", v)} />
       <TextInput type="text" placeholder="Полное имя" value={values.fullName} onChange={v => handleChange("fullName", v)} />
-      <TextInput type="text" placeholder="Должность" value={values.position} onChange={v => handleChange("position", v)} />
       <TextInput type="password" placeholder="Пароль" value={values.password} onChange={v => handleChange("password", v)} />
       <TextInput type="password" placeholder="Повторите пароль" value={values.passwordConfirm} onChange={v => handleChange("passwordConfirm", v)} />
 
