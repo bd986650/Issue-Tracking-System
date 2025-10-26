@@ -96,6 +96,7 @@ export async function submitRegisterAndLogin(data: RegisterRequest) {
       logger.error("accessToken отсутствует в ответе", loginRes);
     }
 
+    window.location.href = "/project-selector";
     return loginRes;
   } catch (err: unknown) {
     logger.error("Ошибка в submitRegisterAndLogin", err);

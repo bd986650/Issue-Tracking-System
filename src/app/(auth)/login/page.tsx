@@ -1,4 +1,4 @@
-import { LoginForm } from "@/app/(auth)/ui";
+import { LoginForm } from "@/widgets/auth";
 import AuthLayout from "@/shared/ui/layouts/AuthLayout";
 
 export default function LoginPage() {

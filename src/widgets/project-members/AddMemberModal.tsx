@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import UniversalTextInput from "@/shared/ui/inputs/UniversalTextInput";
+import TextInput from "@/shared/ui/inputs/TextInput";
 import { submitAddProjectMember } from "@/entities/project/service/projectService";
 import { useProjectStore } from "@/entities/project";
 
@@ -48,11 +48,11 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <UniversalTextInput
+          <TextInput
             label="Email участника"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(value) => setEmail(value as string)}
             placeholder="user@example.com"
             required
           />

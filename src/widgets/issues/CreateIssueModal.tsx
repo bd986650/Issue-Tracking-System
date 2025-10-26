@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CreateIssueRequest, IssueType, Priority } from "@/features/issue-management/model/issueTypes";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import UniversalTextInput from "@/shared/ui/inputs/UniversalTextInput";
+import TextInput from "@/shared/ui/inputs/TextInput";
 import { logger } from "@/shared/utils/logger";
 
 interface CreateIssueModalProps {
@@ -92,10 +92,10 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UniversalTextInput
-              label="Название задачи *"
+            <TextInput
+              label="Название задачи"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(value) => setFormData(prev => ({ ...prev, title: value as string }))}
               placeholder="Введите название задачи"
               required
               minLength={3}
@@ -118,10 +118,10 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
             </div>
           </div>
 
-          <UniversalTextInput
-            label="Описание задачи *"
+          <TextInput
+            label="Описание задачи"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(value) => setFormData(prev => ({ ...prev, description: value as string }))}
             placeholder="Введите описание задачи"
             required
             minLength={5}
@@ -146,28 +146,28 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
               </select>
             </div>
             
-            <UniversalTextInput
+            <TextInput
               label="Дата начала"
               type="date"
               value={formData.startDate || ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+              onChange={(value) => setFormData(prev => ({ ...prev, startDate: value as string }))}
             />
             
-            <UniversalTextInput
+            <TextInput
               label="Дата окончания"
               type="date"
               value={formData.endDate || ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+              onChange={(value) => setFormData(prev => ({ ...prev, endDate: value as string }))}
             />
           </div>
 
-          <UniversalTextInput
+          <TextInput
             label="ID спринта"
             type="number"
             value={formData.sprintId ? formData.sprintId.toString() : ""}
-            onChange={(e) => setFormData(prev => ({ 
+            onChange={(value) => setFormData(prev => ({ 
               ...prev, 
-              sprintId: e.target.value ? parseInt(e.target.value) : undefined 
+              sprintId: value ? parseInt(value as string) : undefined 
             }))}
             placeholder="Введите ID спринта (необязательно)"
           />

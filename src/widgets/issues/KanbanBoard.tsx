@@ -6,10 +6,61 @@ import { useIssueStore } from '@/entities/issue';
 import { Issue, IssueStatus, IssueType, Priority } from '@/entities/issue';
 import { fetchIssues, submitCreateIssue, submitChangeIssueStatus } from '@/features/issue-management';
 import { CreateIssueRequest } from '@/features/issue-management/model/issueTypes';
-import { Plus, Bug, Zap, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar, Clock, User } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';
 
+// Компонент для красивого отображения даты
+const DateDisplay = ({ date, label }: { date?: string; label?: string }) => {
+  if (!date) return null;
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const formattedDate = date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+
+    let statusClass = '';
+    let statusText = '';
+
+    if (diffDays < 0) {
+      statusClass = 'text-red-500 bg-red-50';
+      statusText = 'Просрочено';
+    } else if (diffDays === 0) {
+      statusClass = 'text-orange-500 bg-orange-50';
+      statusText = 'Сегодня';
+    } else if (diffDays <= 3) {
+      statusClass = 'text-yellow-500 bg-yellow-50';
+      statusText = 'Скоро';
+    } else {
+      statusClass = 'text-green-500 bg-green-50';
+      statusText = 'В планах';
+    }
+
+    return (
+      <div className="flex items-center gap-1 text-xs">
+        <Calendar className="w-3 h-3 text-gray-400" />
+        <span className="text-gray-600">{formattedDate}</span>
+        <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>
+          {statusText}
+        </span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex items-center gap-1 text-xs text-gray-500">
+      {label && <span>{label}:</span>}
+      {formatDate(date)}
+    </div>
+  );
+};
 
 const getTypeIcon = (type: IssueType) => {
   switch (type) {
@@ -25,26 +76,43 @@ const getTypeIcon = (type: IssueType) => {
 const getPriorityColor = (priority: Priority) => {
   switch (priority) {
     case "HIGH":
-      return 'text-red-600 bg-red-100';
+      return 'bg-red-500';
     case "MEDIUM":
-      return 'text-yellow-600 bg-yellow-100';
+      return 'bg-yellow-500';
     case "LOW":
-      return 'text-green-600 bg-green-100';
+      return 'bg-green-500';
     default:
-      return 'text-gray-600 bg-gray-100';
+      return 'bg-gray-500';
   }
 };
 
 
-const IssueCard = ({ 
-  issue, 
+const IssueCard = ({
+  issue,
   onClick,
-  onDelete
-}: { 
-  issue: Issue; 
+  onDelete,
+  status
+}: {
+  issue: Issue;
   onClick: (issue: Issue) => void;
   onDelete: (issueId: number) => void;
+  status: IssueStatus;
 }) => {
+  // Определяем стили в зависимости от статуса
+  const getStatusStyles = (status: IssueStatus) => {
+    switch (status) {
+      case "DONE":
+        return "opacity-100 bg-white";
+      case "IN_PROGRESS":
+        return "opacity-100 bg-white";
+      case "OPEN":
+        return "opacity-100 bg-white";
+      default:
+        return "opacity-100 bg-white";
+        // In Review
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', issue.id.toString());
     e.dataTransfer.effectAllowed = 'move';
@@ -58,8 +126,8 @@ const IssueCard = ({
   };
 
   return (
-    <div 
-      className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer group"
+    <div
+      className={`border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all cursor-pointer group ${getStatusStyles(status)}`}
       onClick={() => onClick(issue)}
       draggable
       onDragStart={handleDragStart}
@@ -76,38 +144,35 @@ const IssueCard = ({
           <Trash2 size={14} />
         </button>
       </div>
-      
+
       <p className="text-gray-600 text-xs mb-3 line-clamp-2">{issue.description}</p>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(issue.priority)}`}>
-            {issue.priority}
-          </span>
-          {issue.sprint && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {issue.sprint.name}
-            </span>
-          )}
-        </div>
-      </div>
-      
+
       <div className="mt-2 text-xs text-gray-500">
         {issue.assignee ? `Назначен: ${issue.assignee.fullName}` : 'Не назначен'}
+      </div>
+
+      <div className="mt-2 space-y-1">
+        <DateDisplay date={issue.startDate} label="Начало" />
+        <DateDisplay date={issue.endDate} label="Окончание" />
+      </div>
+
+      {/* Приоритет как цветной прямоугольник снизу */}
+      <div className="mt-3 flex items-center justify-between">
+        <div className={`w-full h-1 rounded-full ${getPriorityColor(issue.priority)}`}></div>
       </div>
     </div>
   );
 };
 
-const KanbanColumn = ({ 
-  title, 
-  issues, 
+const KanbanColumn = ({
+  title,
+  issues,
   onIssueClick,
   onDeleteIssue,
   onDrop
-}: { 
-  title: string; 
-  issues: Issue[]; 
+}: {
+  title: string;
+  issues: Issue[];
   onIssueClick: (issue: Issue) => void;
   onDeleteIssue: (issueId: number) => void;
   onDrop: (issueId: number, newStatus: IssueStatus) => void;
@@ -140,7 +205,7 @@ const KanbanColumn = ({
   };
 
   return (
-    <div 
+    <div
       className="bg-gray-50 rounded-lg p-4 min-h-[600px]"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
@@ -153,14 +218,15 @@ const KanbanColumn = ({
           </span>
         </div>
       </div>
-      
+
       <div className="space-y-3">
         {issues.map((issue) => (
-          <IssueCard 
-            key={issue.id} 
-            issue={issue} 
+          <IssueCard
+            key={issue.id}
+            issue={issue}
             onClick={onIssueClick}
             onDelete={onDeleteIssue}
+            status={getStatusFromTitle(title)}
           />
         ))}
       </div>
@@ -170,13 +236,13 @@ const KanbanColumn = ({
 
 export default function KanbanBoard() {
   const { selectedProject } = useProjectStore();
-  const { 
-    issues, 
+  const {
+    issues,
     setIssues,
-    updateIssue, 
+    updateIssue,
     removeIssue
   } = useIssueStore();
-  
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
@@ -185,7 +251,7 @@ export default function KanbanBoard() {
 
   const loadIssues = useCallback(async () => {
     if (!selectedProject) return;
-    
+
     try {
       setLoading(true);
       const issuesData = await fetchIssues(selectedProject.id);
@@ -202,7 +268,7 @@ export default function KanbanBoard() {
       loadIssues();
     }
   }, [selectedProject, loadIssues]);
-  
+
   if (!selectedProject) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -223,7 +289,7 @@ export default function KanbanBoard() {
   }
 
   const allIssues = issues;
-  
+
   const issuesByStatus = {
     "OPEN": allIssues.filter((issue: Issue) => issue.status === "OPEN"),
     "IN_PROGRESS": allIssues.filter((issue: Issue) => issue.status === "IN_PROGRESS"),
@@ -251,7 +317,7 @@ export default function KanbanBoard() {
 
   const handleDropIssue = async (issueId: number, newStatus: IssueStatus) => {
     if (!selectedProject) return;
-    
+
     try {
       // Определяем действие на основе нового статуса
       let action: 'test' | 'progress' | 'done' | 'open';
@@ -271,7 +337,7 @@ export default function KanbanBoard() {
         default:
           return;
       }
-      
+
       await submitChangeIssueStatus(selectedProject.id, issueId, action);
       await loadIssues(); // Перезагружаем данные
     } catch (err) {
@@ -285,7 +351,7 @@ export default function KanbanBoard() {
 
   const handleSubmitIssue = async (issueData: CreateIssueRequest) => {
     if (!selectedProject) return;
-    
+
     try {
       await submitCreateIssue(selectedProject.id, issueData);
       await loadIssues(); // Перезагружаем данные
@@ -325,7 +391,7 @@ export default function KanbanBoard() {
           <p className="text-red-600">{error}</p>
         </div>
       )}
-      
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
@@ -377,7 +443,7 @@ export default function KanbanBoard() {
         projectId={selectedProject.id}
         onSubmit={handleSubmitIssue}
       />
-      
+
       <EditIssueModal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}

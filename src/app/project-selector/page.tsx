@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { fetchProjects, submitCreateProject, selectProject } from "@/entities/project/service/projectService";
 import { Project } from "@/entities/project";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import UniversalTextInput from "@/shared/ui/inputs/UniversalTextInput";
+import TextInput from "@/shared/ui/inputs/TextInput";
+import LogoutButton from "@/shared/ui/Buttons/LogoutButton";
+import ProjectSlider from "@/widgets/project-selector/ProjectSlider";
 
 export default function ProjectSelectorPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -79,8 +81,9 @@ export default function ProjectSelectorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col">
+      <div className="max-w-4xl mx-auto flex-1 flex flex-col justify-between">
+        <div>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Выберите проект
@@ -102,10 +105,10 @@ export default function ProjectSelectorPage() {
               Создать новый проект
             </h2>
             <form onSubmit={handleCreateProject} className="space-y-4">
-              <UniversalTextInput
+              <TextInput
                 label="Название проекта"
                 value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
+                onChange={(value) => setProjectName(value as string)}
                 placeholder="Введите название проекта"
                 required
                 minLength={3}
@@ -126,30 +129,17 @@ export default function ProjectSelectorPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Мои проекты
             </h2>
-            {projects.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                У вас пока нет проектов
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {projects.map((project, index) => (
-                  <div
-                    key={project.id || index}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleSelectProject(project)}
-                  >
-                    <h3 className="font-medium text-gray-900 mb-2">
-                      {project.name}
-                    </h3>
-                    <div className="text-sm text-gray-600">
-                      <p>Администратор: {project.admin?.fullName || 'Не указан'}</p>
-                      <p>Участников: {(project.members?.length || 0) + 1}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ProjectSlider 
+              projects={projects} 
+              onSelectProject={handleSelectProject}
+            />
           </div>
+        </div>
+        </div>
+
+        {/* Кнопка logout внизу страницы */}
+        <div className="mt-8">
+          <LogoutButton className="w-full bg-black text-white" centered={true} />
         </div>
       </div>
     </div>

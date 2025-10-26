@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CreateSprintRequest } from "@/entities/sprint/model/types";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import UniversalTextInput from "@/shared/ui/inputs/UniversalTextInput";
+import TextInput from "@/shared/ui/inputs/TextInput";
 
 interface CreateSprintModalProps {
   isOpen: boolean;
@@ -82,29 +82,29 @@ export default function CreateSprintModal({ isOpen, onClose, onSubmit }: CreateS
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <UniversalTextInput
-            label="Название спринта *"
+          <TextInput
+            label="Название спринта"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            onChange={(value) => setFormData(prev => ({ ...prev, name: value as string }))}
             placeholder="Введите название спринта"
             required
             minLength={3}
             maxLength={100}
           />
           
-          <UniversalTextInput
-            label="Дата начала *"
+          <TextInput
+            label="Дата начала"
             type="date"
             value={formData.startDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={(value) => setFormData(prev => ({ ...prev, startDate: value as string }))}
             required
           />
           
-          <UniversalTextInput
-            label="Дата окончания *"
+          <TextInput
+            label="Дата окончания"
             type="date"
             value={formData.endDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={(value) => setFormData(prev => ({ ...prev, endDate: value as string }))}
             required
           />
           

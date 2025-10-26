@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useProjectStore } from "@/entities/project";
+import { ProjectBaseUser } from "@/entities/project/model/types";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import { UserPlus, Users } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
@@ -11,6 +12,19 @@ export default function ProjectInfo() {
   const [showAddMember, setShowAddMember] = useState(false);
 
   if (!selectedProject) return null;
+
+  const otherMembers = selectedProject.members?.filter(member => {
+    if (typeof member === 'string') {
+      return member !== selectedProject.admin.email;
+    }
+    return member.email !== selectedProject.admin.email;
+  }) || [];
+
+  const getMemberData = (member: ProjectBaseUser | string) => {
+    const memberEmail = typeof member === 'string' ? member : member.email;
+    const memberRoles = typeof member === 'object' ? member.roles : null;
+    return { memberEmail, memberRoles };
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -42,19 +56,7 @@ export default function ProjectInfo() {
         </div>
 
         <div>
-          <h3 className="font-medium text-gray-900 mb-2">
-            Участники ({(() => {
-              const otherMembers = selectedProject.members?.filter(member => {
-                // Если member - это строка, сравниваем напрямую
-                if (typeof member === 'string') {
-                  return member !== selectedProject.admin.email;
-                }
-                // Если member - это объект, сравниваем по email
-                return member.email !== selectedProject.admin.email;
-              }) || [];
-              return `${otherMembers.length} + 1 админ`;
-            })()})
-          </h3>
+          <h3 className="font-medium text-gray-900 mb-2">Участники</h3>
           <div className="space-y-2">
             {/* Администратор */}
             <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
@@ -64,46 +66,26 @@ export default function ProjectInfo() {
                 Админ
               </span>
             </div>
-            
+
             {/* Участники (исключая администратора) */}
-            {(() => {
-              // Проверяем структуру данных
-              console.log("Admin email:", selectedProject.admin.email);
-              console.log("All members:", selectedProject.members);
-              console.log("First member type:", typeof selectedProject.members?.[0]);
-              console.log("First member:", selectedProject.members?.[0]);
-              
-              const otherMembers = selectedProject.members?.filter(member => {
-                // Если member - это строка, сравниваем напрямую
-                if (typeof member === 'string') {
-                  return member !== selectedProject.admin.email;
-                }
-                // Если member - это объект, сравниваем по email
-                return member.email !== selectedProject.admin.email;
-              }) || [];
-              
-              console.log("Filtered members:", otherMembers);
-              
-              return otherMembers.length > 0 ? otherMembers.map((member, index) => {
-                // Определяем email в зависимости от типа данных
-                const memberEmail = typeof member === 'string' ? member : member.email;
-                const memberRoles = typeof member === 'object' ? member.roles : null;
-                
-                return (
-                  <div key={typeof member === 'string' ? `member-${index}` : (member.id || `member-${index}`)} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
-                    <Users size={16} className="text-gray-400" />
-                    <span className="text-sm">{memberEmail}</span>
-                    <span className="text-xs text-gray-500">
-                      ({memberRoles && Array.isArray(memberRoles) ? memberRoles.join(', ') : 'Участник'})
-                    </span>
-                  </div>
-                );
-              }) : (
-                <div className="text-sm text-gray-500 italic">
-                  Нет дополнительных участников
+            {otherMembers.length > 0 ? otherMembers.map((member, index) => {
+              const { memberEmail, memberRoles } = getMemberData(member);
+
+              return (
+                <div key={typeof member === 'string' ? `member-${index}` : (member.id || `member-${index}`)} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                  <Users size={16} className="text-gray-400" />
+                  <span className="text-sm">{memberEmail}</span>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {/* ({memberRoles && Array.isArray(memberRoles) ? memberRoles.join(', ') : 'Участник'}) */}
+                    Участник
+                  </span>
                 </div>
               );
-            })()}
+            }) : (
+              <div className="text-sm text-gray-500 italic">
+                Нет дополнительных участников
+              </div>
+            )}
           </div>
         </div>
       </div>

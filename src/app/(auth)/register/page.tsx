@@ -1,4 +1,4 @@
-import { RegisterForm } from "@/app/(auth)/ui";
+import { RegisterForm } from "@/widgets/auth";
 import AuthLayout from "@/shared/ui/layouts/AuthLayout";
 
 export default function RegisterPage() {

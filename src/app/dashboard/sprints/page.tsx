@@ -3,19 +3,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProjectStore } from "@/entities/project";
 import { useSprintStore } from "@/entities/sprint";
+import { useIssueStore } from "@/entities/issue";
 import { submitCreateSprint } from "@/features/sprint-management";
 import { fetchSprints } from "@/entities/sprint";
 import { CreateSprintRequest } from "@/features/sprint-management/model/sprintTypes";
+import { Sprint } from "@/entities/sprint/model/types";
 import SprintCard from "@/widgets/sprints/SprintCard";
 import CreateSprintModal from "@/widgets/sprints/CreateSprintModal";
+import SprintDetailsModal from "@/widgets/sprints/SprintDetailsModal";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import { Plus } from "lucide-react";
 
 export default function SprintsPage() {
   const { selectedProject } = useProjectStore();
   const { sprints, setSprints } = useSprintStore();
+  const { issues } = useIssueStore();
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
   const [error, setError] = useState("");
 
   const loadSprints = useCallback(async () => {
@@ -41,18 +47,22 @@ export default function SprintsPage() {
   const handleCreateSprint = async (data: CreateSprintRequest) => {
     if (!selectedProject) return;
     
-    console.log("🔍 SprintsPage: Создаем спринт", {
-      projectId: selectedProject.id,
-      sprintData: data,
-      projectName: selectedProject.name
-    });
-    
     try {
       await submitCreateSprint(selectedProject.id, data);
       await loadSprints(); // Перезагружаем список
     } catch (err) {
       throw err; // Ошибка будет обработана в модальном окне
     }
+  };
+
+  const handleViewSprint = (sprint: Sprint) => {
+    setSelectedSprint(sprint);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedSprint(null);
   };
 
   if (!selectedProject) {
@@ -106,6 +116,7 @@ export default function SprintsPage() {
               <SprintCard
                 key={sprint.id || index}
                 sprint={sprint}
+                onView={handleViewSprint}
               />
             ))}
           </div>
@@ -115,6 +126,13 @@ export default function SprintsPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateSprint}
+        />
+
+        <SprintDetailsModal
+          isOpen={showDetailsModal}
+          onClose={handleCloseDetailsModal}
+          sprint={selectedSprint}
+          issues={issues}
         />
       </div>
     </div>

@@ -13,9 +13,7 @@ import {
 // Создание задачи
 export async function createIssue(projectId: number, data: CreateIssueRequest): Promise<void> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Создаем задачу", { projectId, title: data.title, type: data.type });
-  
+    
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }

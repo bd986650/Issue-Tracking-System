@@ -1,7 +1,7 @@
 "use client";
 
-import { UsersRound, FolderOpen, Bug, Calendar } from "lucide-react";
-import { LogoutButton } from "@/app/(auth)/ui";
+import { FolderOpen, Bug, Calendar } from "lucide-react";
+import LogoutButton from "@/shared/ui/Buttons/LogoutButton";
 import { useEffect } from "react";
 import { useUser } from "@/entities/user";
 import { useProjectStore } from "@/entities/project";
@@ -11,8 +11,7 @@ export default function Sidebar() {
   
   const menuItems = [
     { label: "Задачи", icon: <Bug size={24} />, href: "/dashboard/issues" },
-    { label: "Спринты", icon: <Calendar size={24} />, href: "/dashboard/sprints" },
-    { label: "Участники", icon: <UsersRound size={24} />, href: "/dashboard/members" },
+    { label: "Спринты", icon: <Calendar size={24} />, href: "/dashboard/sprints" }
   ];
 
   const { user, hydrateFromStorage, displayName, email } = useUser();
@@ -36,16 +35,13 @@ export default function Sidebar() {
         {/* Информация о проекте */}
         <div className="w-full">
           <span className="text-xs text-gray-500 mb-2 block">Текущий проект</span>
-          {selectedProject ? (
-            <div className="flex items-center gap-2 p-2 bg-gray-800 rounded-lg">
-              <FolderOpen size={16} className="text-blue-400" />
-              <span className="text-sm font-medium truncate">{selectedProject.name}</span>
-            </div>
-          ) : (
-            <div className="p-2 bg-gray-800 rounded-lg">
-              <span className="text-sm text-gray-400">Проект не выбран</span>
-            </div>
-          )}
+          <a 
+              href="/dashboard"
+              className="flex items-center gap-2 p-2 bg-blue-500 rounded-lg hover:opacity-95 transition-colors"
+            >
+              <FolderOpen size={16} className="text-white" />
+              <span className="text-sm font-medium truncate">{selectedProject?.name}</span>
+            </a>
         </div>
 
         {/* Ещё один разделитель перед меню */}
@@ -59,7 +55,7 @@ export default function Sidebar() {
             <a
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition-colors ${
+              className={`flex items-center gap-3 p-2 rounded-lg hover:bg-blue-500 transition-colors ${
                 !selectedProject ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               onClick={(e) => {
@@ -74,7 +70,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <LogoutButton />
+        <LogoutButton className="hover:bg-blue-500"/>
       </div>
     </div>
   );
