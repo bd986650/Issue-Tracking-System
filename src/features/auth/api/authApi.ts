@@ -41,10 +41,6 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 
 // Регистрация
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  console.log("Register API - отправляем данные:", data);
-  console.log("Register API - URL:", ENDPOINTS.auth.register);
-  console.log("Register API - JSON строка:", JSON.stringify(data));
-  
   const res = await fetch(ENDPOINTS.auth.register, {
     method: "POST",
     headers: { 
@@ -54,8 +50,6 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
     body: JSON.stringify(data),
   });
 
-  console.log("Register API - статус ответа:", res.status);
-
   if (!res.ok) {
     let errorMessage = "Ошибка регистрации";
     
@@ -63,8 +57,6 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
     
     try {
       const errorData = await res.json();
-      console.log("Register API - ошибка JSON:", errorData);
-      console.log("Register API - детали ошибок:", errorData.errors);
       
       // Формируем детальное сообщение об ошибке
       if (errorData.errors) {
@@ -78,15 +70,12 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
     } catch {
       try {
         const errorText = await responseClone.text();
-        console.log("Register API - ошибка текст:", errorText);
         errorMessage = errorText || errorMessage;
       } catch {
-        console.log("Register API - не удалось получить текст ошибки");
         errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
       }
     }
     
-    console.log("Register API - финальное сообщение об ошибке:", errorMessage);
     throw new Error(errorMessage);
   }
 

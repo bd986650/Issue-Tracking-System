@@ -52,8 +52,6 @@ export async function createIssue(projectId: number, data: CreateIssueRequest): 
 export async function getIssues(projectId: number): Promise<IssueApiResponse[]> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Получаем задачи проекта", { projectId });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -92,8 +90,6 @@ export async function getIssues(projectId: number): Promise<IssueApiResponse[]> 
 export async function updateIssue(projectId: number, issueId: number, data: UpdateIssueRequest): Promise<void> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Обновляем задачу", { projectId, issueId, title: data.title });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -131,8 +127,6 @@ export async function updateIssue(projectId: number, issueId: number, data: Upda
 // Удаление задачи
 export async function deleteIssue(projectId: number, issueId: number): Promise<void> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Удаляем задачу", { projectId, issueId });
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
@@ -174,8 +168,6 @@ export async function changeIssueStatus(
 ): Promise<void> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Изменяем статус задачи", { projectId, issueId, action });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -211,8 +203,6 @@ export async function changeIssueStatus(
 // Поиск задач
 export async function searchIssues(projectId: number, data: SearchIssuesRequest): Promise<Issue[]> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Ищем задачи", { projectId, filters: data });
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
@@ -258,8 +248,6 @@ export async function searchIssues(projectId: number, data: SearchIssuesRequest)
 // Получение истории изменений задачи
 export async function getIssueHistory(projectId: number, issueId: number): Promise<IssueHistory[]> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Получаем историю задачи", { projectId, issueId });
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");

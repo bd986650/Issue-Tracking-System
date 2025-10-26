@@ -11,8 +11,6 @@ import {
 export async function createSprint(projectId: number, data: CreateSprintRequest): Promise<void> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Создаем спринт", { name: data.name, projectId });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -55,8 +53,6 @@ export async function createSprint(projectId: number, data: CreateSprintRequest)
 export async function getSprints(projectId: number): Promise<Sprint[]> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Получаем спринты проекта", { projectId });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -83,7 +79,6 @@ export async function getSprints(projectId: number): Promise<Sprint[]> {
     }
 
     const sprints = await res.json();
-    console.log("API ответ спринтов:", sprints);
     logger.success("Спринты успешно загружены", { projectId, count: sprints.length });
     return sprints;
   } catch (error) {
@@ -95,9 +90,7 @@ export async function getSprints(projectId: number): Promise<Sprint[]> {
 // Обновление спринта
 export async function updateSprint(projectId: number, sprintId: number, data: UpdateSprintRequest): Promise<void> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Обновляем спринт", { projectId, sprintId, name: data.name });
-  
+
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -137,8 +130,6 @@ export async function updateSprint(projectId: number, sprintId: number, data: Up
 // доработать 
 export async function deleteSprint(projectId: number, sprintId: number): Promise<void> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Удаляем спринт", { projectId, sprintId });
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");

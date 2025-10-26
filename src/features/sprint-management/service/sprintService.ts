@@ -14,7 +14,6 @@ import { logger } from "@/shared/utils/logger";
 // Создание спринта
 export async function submitCreateSprint(projectId: number, data: CreateSprintRequest): Promise<void> {
   try {
-    logger.info("Создаем спринт", { name: data.name, projectId });
     await createSprintApi(projectId, data);
     logger.success("Спринт успешно создан", { name: data.name, projectId });
   } catch (err: unknown) {
@@ -27,7 +26,6 @@ export async function submitCreateSprint(projectId: number, data: CreateSprintRe
 // Получение спринтов проекта
 export async function fetchSprints(projectId: number): Promise<Sprint[]> {
   try {
-    logger.info("Загружаем спринты проекта", { projectId });
     const sprints = await getSprintsApi(projectId);
     logger.success("Спринты успешно загружены", { projectId, count: sprints.length });
     return sprints;
@@ -41,7 +39,6 @@ export async function fetchSprints(projectId: number): Promise<Sprint[]> {
 // Обновление спринта
 export async function submitUpdateSprint(projectId: number, sprintId: number, data: UpdateSprintRequest): Promise<void> {
   try {
-    logger.info("Обновляем спринт", { projectId, sprintId, name: data.name });
     await updateSprintApi(projectId, sprintId, data);
     logger.success("Спринт успешно обновлен", { projectId, sprintId });
   } catch (err: unknown) {
@@ -54,7 +51,6 @@ export async function submitUpdateSprint(projectId: number, sprintId: number, da
 // Удаление спринта
 export async function submitDeleteSprint(projectId: number, sprintId: number): Promise<void> {
   try {
-    logger.info("Удаляем спринт", { projectId, sprintId });
     await deleteSprintApi(projectId, sprintId);
     logger.success("Спринт успешно удален", { projectId, sprintId });
   } catch (err: unknown) {

@@ -11,8 +11,6 @@ import {
 export async function createProject(data: CreateProjectRequest): Promise<void> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Создаем проект", { name: data.name });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -50,8 +48,6 @@ export async function createProject(data: CreateProjectRequest): Promise<void> {
 // Получение всех проектов
 export async function getProjects(): Promise<ProjectResponse[]> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Получаем список проектов");
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
@@ -91,8 +87,6 @@ export async function getProjects(): Promise<ProjectResponse[]> {
 export async function addProjectMember(projectId: number, data: AddMemberRequest): Promise<void> {
   const token = StorageService.getAccessToken();
   
-  logger.info("Добавляем участника в проект", { projectId, memberEmail: data.memberEmail });
-  
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
@@ -130,8 +124,6 @@ export async function addProjectMember(projectId: number, data: AddMemberRequest
 // Удаление проекта
 export async function deleteProject(projectId: number): Promise<void> {
   const token = StorageService.getAccessToken();
-  
-  logger.info("Удаляем проект", { projectId });
   
   if (!token) {
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");

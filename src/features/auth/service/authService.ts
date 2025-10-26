@@ -65,12 +65,9 @@ export async function submitRegisterAndLogin(data: RegisterRequest) {
     }
 
     // 2. Регистрация
-    logger.info("Начинаем регистрацию...");
     await register(data);
-    logger.success("Регистрация успешна");
 
     // 3. Авто-логин
-    logger.info("Начинаем логин...");
     const loginRes = await login({ email: data.email, password: data.password });
 
     // 4. Сохраняем токен и обновляем store

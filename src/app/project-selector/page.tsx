@@ -52,7 +52,6 @@ export default function ProjectSelectorPage() {
       await loadProjects(); // Перезагружаем список проектов
       setProjectName("");
     } catch (err) {
-      console.error("Create project error:", err);
       setError(err instanceof Error ? err.message : "Ошибка создания проекта");
     } finally {
       setCreating(false);
@@ -61,7 +60,6 @@ export default function ProjectSelectorPage() {
 
   const handleSelectProject = (project: Project) => {
     if (!project.id) {
-      console.error("Проект не имеет ID:", project);
       setError("Ошибка: проект не имеет корректного ID");
       return;
     }

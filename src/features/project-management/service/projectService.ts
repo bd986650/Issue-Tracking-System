@@ -9,7 +9,6 @@ import { logger } from "@/shared/utils/logger";
 // Создание проекта
 export async function submitCreateProject(data: CreateProjectRequest): Promise<void> {
   try {
-    logger.info("Начинаем создание проекта", { name: data.name });
     await createProjectApi(data);
     logger.success("Проект успешно создан", { name: data.name });
   } catch (err: unknown) {
@@ -22,7 +21,6 @@ export async function submitCreateProject(data: CreateProjectRequest): Promise<v
 // Получение списка проектов
 export async function fetchProjects(): Promise<ProjectResponse[]> {
   try {
-    logger.info("Загружаем список проектов");
     const projects = await getProjectsApi();
     logger.success("Проекты успешно загружены", { count: projects.length });
     return projects;
@@ -36,7 +34,6 @@ export async function fetchProjects(): Promise<ProjectResponse[]> {
 // Добавление участника в проект
 export async function submitAddProjectMember(projectId: number, data: AddMemberRequest): Promise<void> {
   try {
-    logger.info("Добавляем участника в проект", { projectId, memberEmail: data.memberEmail });
     await addProjectMemberApi(projectId, data);
     logger.success("Участник успешно добавлен", { projectId, memberEmail: data.memberEmail });
   } catch (err: unknown) {

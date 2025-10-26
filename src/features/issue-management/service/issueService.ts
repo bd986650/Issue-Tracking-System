@@ -19,7 +19,6 @@ import { logger } from "@/shared/utils/logger";
 // Создание задачи
 export async function submitCreateIssue(projectId: number, data: CreateIssueRequest): Promise<void> {
   try {
-    logger.info("Создаем задачу", { projectId, title: data.title });
     await createIssueApi(projectId, data);
     logger.success("Задача успешно создана", { projectId, title: data.title });
   } catch (err: unknown) {
@@ -32,7 +31,6 @@ export async function submitCreateIssue(projectId: number, data: CreateIssueRequ
 // Получение задач проекта
 export async function fetchIssues(projectId: number): Promise<Issue[]> {
   try {
-    logger.info("Загружаем задачи проекта", { projectId });
     const issues = await getIssuesApi(projectId);
     
     // Маппинг API ответа в формат Issue
@@ -73,7 +71,6 @@ export async function fetchIssues(projectId: number): Promise<Issue[]> {
 // Обновление задачи
 export async function submitUpdateIssue(projectId: number, issueId: number, data: UpdateIssueRequest): Promise<void> {
   try {
-    logger.info("Обновляем задачу", { projectId, issueId, title: data.title });
     await updateIssueApi(projectId, issueId, data);
     logger.success("Задача успешно обновлена", { projectId, issueId });
   } catch (err: unknown) {
@@ -86,7 +83,6 @@ export async function submitUpdateIssue(projectId: number, issueId: number, data
 // Удаление задачи
 export async function submitDeleteIssue(projectId: number, issueId: number): Promise<void> {
   try {
-    logger.info("Удаляем задачу", { projectId, issueId });
     await deleteIssueApi(projectId, issueId);
     logger.success("Задача успешно удалена", { projectId, issueId });
   } catch (err: unknown) {
@@ -103,7 +99,6 @@ export async function submitChangeIssueStatus(
   action: 'test' | 'progress' | 'done' | 'open'
 ): Promise<void> {
   try {
-    logger.info("Изменяем статус задачи", { projectId, issueId, action });
     await changeIssueStatusApi(projectId, issueId, action);
     logger.success("Статус задачи успешно изменен", { projectId, issueId, action });
   } catch (err: unknown) {
@@ -116,7 +111,6 @@ export async function submitChangeIssueStatus(
 // Поиск задач
 export async function submitSearchIssues(projectId: number, data: SearchIssuesRequest): Promise<Issue[]> {
   try {
-    logger.info("Ищем задачи", { projectId, filters: data });
     const issues = await searchIssuesApi(projectId, data);
     logger.success("Поиск задач выполнен", { projectId, count: issues.length });
     return issues;
@@ -130,7 +124,6 @@ export async function submitSearchIssues(projectId: number, data: SearchIssuesRe
 // Получение истории задачи
 export async function fetchIssueHistory(projectId: number, issueId: number): Promise<IssueHistory[]> {
   try {
-    logger.info("Загружаем историю задачи", { projectId, issueId });
     const history = await getIssueHistoryApi(projectId, issueId);
     logger.success("История задачи загружена", { projectId, issueId, count: history.length });
     return history;
