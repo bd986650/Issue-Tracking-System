@@ -24,7 +24,7 @@ export default function AddMemberModal({ isOpen, onClose }: AddMemberModalProps)
     try {
       setLoading(true);
       setError("");
-      await submitAddProjectMember(selectedProject.id, email.trim());
+      await submitAddProjectMember(selectedProject.id, { memberEmail: email.trim() });
       setEmail("");
       onClose();
     } catch (err) {
