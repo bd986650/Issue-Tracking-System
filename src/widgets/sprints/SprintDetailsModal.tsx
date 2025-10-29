@@ -1,7 +1,7 @@
 "use client";
 
-import { Sprint } from '@/entities/sprint/model/types';
-import { Issue } from '@/entities/issue/model/types'
+import { Sprint } from '@/entities/sprint';
+import { Issue } from '@/entities/issue'
 import { X, Calendar, Users, Bug, Zap, AlertCircle } from 'lucide-react';
 
 interface SprintDetailsModalProps {

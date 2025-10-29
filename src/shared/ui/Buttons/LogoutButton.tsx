@@ -1,6 +1,6 @@
 "use client";
 import { LogOut } from "lucide-react";
-import { logout } from "@/entities/user";
+import { logout } from "@/features/auth";
 
 interface LogoutButtonProps {
   className?: string;

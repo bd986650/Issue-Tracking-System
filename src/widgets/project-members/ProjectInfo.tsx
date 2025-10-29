@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useProjectStore } from "@/entities/project";
-import { ProjectBaseUser } from "@/entities/project/model/types";
+import { ProjectBaseUser } from "@/entities/project";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import { UserPlus, Users } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";

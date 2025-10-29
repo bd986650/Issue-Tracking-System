@@ -3,7 +3,8 @@ import {
   getProjects as getProjectsApi,
   addProjectMember as addProjectMemberApi
 } from "../api/projectApi";
-import { CreateProjectRequest, ProjectResponse, AddMemberRequest } from "../model/projectTypes";
+import { CreateProjectRequest, AddMemberRequest } from "../model/projectTypes";
+import { Project } from "@/entities/project";
 import { logger } from "@/shared/utils/logger";
 
 // Создание проекта
@@ -19,11 +20,27 @@ export async function submitCreateProject(data: CreateProjectRequest): Promise<v
 }
 
 // Получение списка проектов
-export async function fetchProjects(): Promise<ProjectResponse[]> {
+export async function fetchProjects(): Promise<Project[]> {
   try {
-    const projects = await getProjectsApi();
-    logger.success("Проекты успешно загружены", { count: projects.length });
-    return projects;
+    const projectResponses = await getProjectsApi();
+    logger.success("Проекты успешно загружены", { count: projectResponses.length });
+    // Маппинг ProjectResponse[] в доменную модель Project[]
+    return projectResponses.map(response => ({
+      id: response.id,
+      name: response.name,
+      admin: {
+        id: response.adminEmail,
+        email: response.adminEmail,
+        fullName: response.adminEmail.split('@')[0],
+        roles: response.isAdmin ? ['ADMIN'] : []
+      },
+      members: response.members.map(memberEmail => ({
+        id: memberEmail,
+        email: memberEmail,
+        fullName: memberEmail.split('@')[0],
+        roles: []
+      }))
+    }));
   } catch (err: unknown) {
     logger.error("Ошибка загрузки проектов", err);
     if (err instanceof Error) throw err;

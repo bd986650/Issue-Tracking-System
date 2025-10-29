@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreateSprintRequest } from "@/entities/sprint/model/types";
+import { CreateSprintRequest } from "@/entities/sprint";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";
 

@@ -8,7 +8,7 @@ import {
   CreateSprintRequest, 
   UpdateSprintRequest,
   Sprint 
-} from "../model/sprintTypes";
+} from "@/entities/sprint";
 import { logger } from "@/shared/utils/logger";
 
 // Создание спринта

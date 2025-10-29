@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchProjects, submitCreateProject, selectProject } from "@/entities/project/service/projectService";
+import { fetchProjects, submitCreateProject } from "@/features/project-management";
+import { selectProject } from "@/entities/project";
 import { Project } from "@/entities/project";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";

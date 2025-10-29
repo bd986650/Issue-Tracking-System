@@ -1,7 +1,7 @@
 "use client";
 
 import { useProjectStore } from '@/entities/project';
-import { fetchProjects } from '@/entities/project/service/projectService';
+import { fetchProjects } from '@/features/project-management';
 import { ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Project } from '@/entities/project';

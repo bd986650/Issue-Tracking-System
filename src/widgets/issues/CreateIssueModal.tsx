@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreateIssueRequest, IssueType, Priority } from "@/features/issue-management/model/issueTypes";
+import { CreateIssueRequest, IssueType, Priority } from "@/features/issue-management";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";
 import { logger } from "@/shared/utils/logger";

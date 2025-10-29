@@ -5,7 +5,7 @@ import { useProjectStore } from '@/entities/project';
 import { useIssueStore } from '@/entities/issue';
 import { Issue, IssueStatus, IssueType, Priority } from '@/entities/issue';
 import { fetchIssues, submitCreateIssue, submitChangeIssueStatus } from '@/features/issue-management';
-import { CreateIssueRequest } from '@/features/issue-management/model/issueTypes';
+import { CreateIssueRequest } from '@/features/issue-management';
 import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar, Clock, User } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';

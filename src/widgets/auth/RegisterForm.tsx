@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { submitRegisterAndLogin } from "@/entities/user";
+import { submitRegisterAndLogin } from "@/features/auth";
 import TextInput from "@/shared/ui/inputs/TextInput";
 import { RegisterFormValues } from "@/entities/user";
 

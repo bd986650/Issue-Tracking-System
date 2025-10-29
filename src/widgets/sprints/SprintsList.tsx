@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useProjectStore } from '@/entities/project';
 import { useSprintStore } from '@/entities/sprint';
 import { useIssueStore } from '@/entities/issue';
-import { Sprint } from '@/entities/sprint/model/types';
+import { Sprint } from '@/entities/sprint';
 import { Plus, Calendar, Users, CheckCircle, Clock, Edit, Trash2 } from 'lucide-react';
 import CreateSprintModal from './CreateSprintModal';
 import EditSprintModal from './EditSprintModal';

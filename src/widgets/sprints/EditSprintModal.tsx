@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Sprint } from '@/entities/sprint/model/types';
+import { Sprint } from '@/entities/sprint';
 import { X } from 'lucide-react';
 
 interface EditSprintModalProps {

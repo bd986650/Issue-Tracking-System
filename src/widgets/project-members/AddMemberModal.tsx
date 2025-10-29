@@ -3,7 +3,7 @@
 import { useState } from "react";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";
-import { submitAddProjectMember } from "@/entities/project/service/projectService";
+import { submitAddProjectMember } from "@/features/project-management";
 import { useProjectStore } from "@/entities/project";
 
 interface AddMemberModalProps {
