@@ -9,6 +9,7 @@ import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";
 import LogoutButton from "@/shared/ui/Buttons/LogoutButton";
 import ProjectSlider from "@/widgets/project-selector/ProjectSlider";
+import { Search, X } from "lucide-react";
 
 export default function ProjectSelectorPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -16,6 +17,7 @@ export default function ProjectSelectorPage() {
   const [creating, setCreating] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -68,6 +70,11 @@ export default function ProjectSelectorPage() {
     router.push("/dashboard");
   };
 
+  // Фильтрация проектов по поисковому запросу
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -97,7 +104,7 @@ export default function ProjectSelectorPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 transition-all duration-500 ease-in-out">
           {/* Создание нового проекта */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -125,13 +132,48 @@ export default function ProjectSelectorPage() {
 
           {/* Список существующих проектов */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Мои проекты
-            </h2>
-            <ProjectSlider 
-              projects={projects} 
-              onSelectProject={handleSelectProject}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Мои проекты
+              </h2>
+            </div>
+            
+            {/* Поиск по проектам */}
+            <div className="relative mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Поиск по названию проекта..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 rounded-md bg-gray-100 text-black transition-all duration-150 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Очистить поиск"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <p className="mt-2 text-sm text-gray-500">
+                  Найдено проектов: {filteredProjects.length}
+                </p>
+              )}
+            </div>
+            <div className="relative min-h-[400px] w-full overflow-hidden">
+              {/* Контейнер с фиксированной шириной */}
+              <div className="relative w-full max-w-xl mx-auto">
+                <ProjectSlider 
+                  projects={filteredProjects} 
+                  onSelectProject={handleSelectProject}
+                />
+              </div>
+            </div>
           </div>
         </div>
         </div>

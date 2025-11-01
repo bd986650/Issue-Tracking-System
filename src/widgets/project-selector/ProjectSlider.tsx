@@ -37,16 +37,8 @@ export default function ProjectSlider({ projects, onSelectProject }: ProjectSlid
     setTimeout(() => setIsTransitioning(false), 500);
   };
 
-  if (projects.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-        <p className="text-muted-foreground">У вас пока нет проектов</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative w-full max-w-xl mx-auto">
+    <div className="relative w-full">
       {/* Обёртка слайдера */}
       <div className="overflow-hidden bg-background">
         <div
