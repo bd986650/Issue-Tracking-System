@@ -48,6 +48,44 @@ export async function createIssue(projectId: number, data: CreateIssueRequest): 
   }
 }
 
+// Получение задач проекта по спринту
+export async function getIssuesBySprint(projectId: number, sprintId: number): Promise<IssueApiResponse[]> {
+  const token = StorageService.getAccessToken();
+  
+  if (!token) {
+    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
+  }
+
+  try {
+    const res = await fetch(ENDPOINTS.issues.bySprint(projectId, sprintId), {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      },
+    });
+
+    if (!res.ok) {
+      let errorMessage = "Ошибка получения задач по спринту";
+      
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const issues = await res.json();
+    logger.success("Задачи по спринту успешно загружены", { projectId, sprintId, count: issues.length });
+    return issues;
+  } catch (error) {
+    logger.error("Ошибка при получении задач по спринту", error);
+    throw error;
+  }
+}
+
 // Получение всех задач проекта
 export async function getIssues(projectId: number): Promise<IssueApiResponse[]> {
   const token = StorageService.getAccessToken();
@@ -253,8 +291,11 @@ export async function getIssueHistory(projectId: number, issueId: number): Promi
     throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
   }
 
+  const url = ENDPOINTS.issues.history(projectId, issueId);
+  logger.info("Запрос истории задачи", { url, projectId, issueId });
+
   try {
-    const res = await fetch(ENDPOINTS.issues.history(projectId, issueId), {
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`
@@ -264,12 +305,34 @@ export async function getIssueHistory(projectId: number, issueId: number): Promi
     if (!res.ok) {
       let errorMessage = "Ошибка получения истории задачи";
       
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+      // Специальная обработка для 403
+      if (res.status === 403) {
+        errorMessage = "У вас нет доступа к истории этой задачи. Возможно, у вас недостаточно прав.";
+        
+        try {
+          const errorData = await res.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем стандартное сообщение
+        }
+      } else {
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+        }
       }
+      
+      logger.error("Ошибка получения истории", { 
+        status: res.status, 
+        statusText: res.statusText,
+        projectId, 
+        issueId,
+        url 
+      });
       
       throw new Error(errorMessage);
     }

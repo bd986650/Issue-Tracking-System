@@ -1,6 +1,7 @@
 import { 
   createIssue as createIssueApi,
   getIssues as getIssuesApi,
+  getIssuesBySprint as getIssuesBySprintApi,
   updateIssue as updateIssueApi,
   deleteIssue as deleteIssueApi,
   changeIssueStatus as changeIssueStatusApi,
@@ -12,7 +13,8 @@ import {
   UpdateIssueRequest, 
   SearchIssuesRequest,
   Issue,
-  IssueHistory 
+  IssueHistory,
+  IssueApiResponse
 } from "../model/issueTypes";
 import { logger } from "@/shared/utils/logger";
 
@@ -28,41 +30,63 @@ export async function submitCreateIssue(projectId: number, data: CreateIssueRequ
   }
 }
 
+// Маппинг API ответа в формат Issue
+function mapIssueResponse(issue: IssueApiResponse): Issue {
+  return {
+    id: issue.id,
+    title: issue.title,
+    description: issue.description,
+    type: issue.type || 'BUG', // Если type null, используем BUG по умолчанию
+    status: issue.status,
+    priority: issue.priority,
+    assignee: issue.assigneeEmail ? {
+      id: issue.assigneeEmail,
+      email: issue.assigneeEmail,
+      fullName: issue.assigneeEmail.split('@')[0]
+    } : undefined,
+    creator: {
+      id: issue.authorEmail,
+      email: issue.authorEmail,
+      fullName: issue.authorEmail.split('@')[0]
+    },
+    startDate: issue.startDate,
+    endDate: issue.endDate,
+    sprint: issue.sprintId ? {
+      id: issue.sprintId,
+      name: `Sprint ${issue.sprintId}` // Временное решение, нужно получать имя спринта
+    } : undefined
+  };
+}
+
 // Получение задач проекта
 export async function fetchIssues(projectId: number): Promise<Issue[]> {
   try {
     const issues = await getIssuesApi(projectId);
     
     // Маппинг API ответа в формат Issue
-    const mappedIssues = issues.map(issue => ({
-      id: issue.id,
-      title: issue.title,
-      description: issue.description,
-      type: issue.type || 'BUG', // Если type null, используем BUG по умолчанию
-      status: issue.status,
-      priority: issue.priority,
-      assignee: issue.assigneeEmail ? {
-        id: issue.assigneeEmail,
-        email: issue.assigneeEmail,
-        fullName: issue.assigneeEmail.split('@')[0]
-      } : undefined,
-      creator: {
-        id: issue.authorEmail,
-        email: issue.authorEmail,
-        fullName: issue.authorEmail.split('@')[0]
-      },
-      startDate: issue.startDate,
-      endDate: issue.endDate,
-      sprint: issue.sprintId ? {
-        id: issue.sprintId,
-        name: `Sprint ${issue.sprintId}` // Временное решение, нужно получать имя спринта
-      } : undefined
-    }));
+    const mappedIssues = issues.map(mapIssueResponse);
     
     logger.success("Задачи успешно загружены", { projectId, count: mappedIssues.length });
     return mappedIssues;
   } catch (err: unknown) {
     logger.error("Ошибка загрузки задач", err);
+    if (err instanceof Error) throw err;
+    throw new Error("Серверная ошибка, попробуйте позже");
+  }
+}
+
+// Получение задач проекта по спринту
+export async function fetchIssuesBySprint(projectId: number, sprintId: number): Promise<Issue[]> {
+  try {
+    const issues = await getIssuesBySprintApi(projectId, sprintId);
+    
+    // Маппинг API ответа в формат Issue
+    const mappedIssues = issues.map(mapIssueResponse);
+    
+    logger.success("Задачи по спринту успешно загружены", { projectId, sprintId, count: mappedIssues.length });
+    return mappedIssues;
+  } catch (err: unknown) {
+    logger.error("Ошибка загрузки задач по спринту", err);
     if (err instanceof Error) throw err;
     throw new Error("Серверная ошибка, попробуйте позже");
   }
