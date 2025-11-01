@@ -1,7 +1,6 @@
-"use client";
-
 import React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { UniversalButtonClient } from "./UniversalButtonClient";
 
 interface UniversalButtonProps {
   children: React.ReactNode;
@@ -33,22 +32,12 @@ export default function UniversalButton({
   hoverBackgroundColor,
   hoverTextColor,
 }: UniversalButtonProps) {
-  const router = useRouter();
-
   const baseClasses = "px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
   
   const variantClasses = {
     primary: "bg-blue-500 text-white hover:opacity-95 disabled:opacity-50",
     secondary: "bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50",
     outline: "border border-gray-300 text-gray-700 hover:opacity-90 disabled:opacity-50"
-  };
-
-  const handleClick = () => {
-    if (href) {
-      router.push(href);
-    } else if (onClick) {
-      onClick();
-    }
   };
 
   // Создаем кастомные стили если переданы цвета
@@ -66,15 +55,31 @@ export default function UniversalButton({
     customHoverClasses.push(`hover:text-[${hoverTextColor}]`);
   }
 
+  const buttonClasses = `${baseClasses} ${variantClasses[variant]} ${customHoverClasses.join(' ')} ${className}`;
+
+  // Если есть href и нет onClick, используем Next.js Link для серверного рендеринга
+  if (href && !onClick) {
+    return (
+      <Link
+        href={href}
+        className={buttonClasses}
+        style={customStyles}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  // Если есть onClick или type submit, используем клиентский компонент
   return (
-    <button
+    <UniversalButtonClient
+      onClick={onClick}
       type={type}
-      onClick={handleClick}
       disabled={disabled}
+      className={buttonClasses}
       style={customStyles}
-      className={`${baseClasses} ${variantClasses[variant]} ${customHoverClasses.join(' ')} ${className}`}
     >
       {children}
-    </button>
+    </UniversalButtonClient>
   );
 }

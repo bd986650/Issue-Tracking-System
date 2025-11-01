@@ -1,5 +1,3 @@
-"use client";
-
 import { Project } from "@/entities/project";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 

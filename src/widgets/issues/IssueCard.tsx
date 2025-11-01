@@ -1,5 +1,3 @@
-"use client";
-
 import { Issue, IssueStatus } from "@/entities/issue";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import { Calendar, User, Flag, Bug, Zap } from "lucide-react";

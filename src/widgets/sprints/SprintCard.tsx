@@ -1,5 +1,3 @@
-"use client";
-
 import { Sprint } from "@/entities/sprint";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import { Calendar, Flag } from "lucide-react";
