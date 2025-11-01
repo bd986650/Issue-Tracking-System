@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useProjectStore } from "@/entities/project";
 import { ProjectBaseUser } from "@/entities/project";
+import { submitDeleteProject } from "@/features/project-management";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import { UserPlus, Users } from "lucide-react";
+import { UserPlus, Users, Trash2 } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
 
 export default function ProjectInfo() {
-  const { selectedProject } = useProjectStore();
+  const { selectedProject, setSelectedProject } = useProjectStore();
+  const router = useRouter();
   const [showAddMember, setShowAddMember] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!selectedProject) return null;
 
@@ -26,19 +30,54 @@ export default function ProjectInfo() {
     return { memberEmail, memberRoles };
   };
 
+  const handleDeleteProject = async () => {
+    if (!selectedProject?.id) return;
+
+    const confirmed = window.confirm(
+      `Вы уверены, что хотите удалить проект "${selectedProject.name}"?\n\nЭто действие нельзя отменить.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await submitDeleteProject(selectedProject.id);
+      
+      // Очищаем выбранный проект из хранилища
+      setSelectedProject(null);
+      
+      // Перенаправляем на страницу выбора проекта
+      router.push("/project-selector");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Ошибка при удалении проекта");
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900">
           Информация о проекте
         </h2>
-        <UniversalButton
-          onClick={() => setShowAddMember(true)}
-          className="flex items-center gap-2"
-        >
-          <UserPlus size={16} />
-          Добавить участника
-        </UniversalButton>
+        <div className="flex items-center gap-2">
+          <UniversalButton
+            onClick={() => setShowAddMember(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus size={16} />
+            Добавить участника
+          </UniversalButton>
+          <UniversalButton
+            onClick={handleDeleteProject}
+            disabled={isDeleting}
+            variant="outline"
+            className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+          >
+            <Trash2 size={16} />
+            {isDeleting ? "Удаление..." : "Удалить проект"}
+          </UniversalButton>
+        </div>
       </div>
 
       <div className="space-y-4">
