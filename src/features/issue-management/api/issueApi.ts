@@ -1,5 +1,6 @@
 import { ENDPOINTS } from "@/shared/config/api";
 import { StorageService } from "@/shared/services/storageService";
+import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
 import { 
   Issue, 
@@ -12,18 +13,11 @@ import {
 
 // Создание задачи
 export async function createIssue(projectId: number, data: CreateIssueRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
-    
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.issues.create(projectId), {
+    const res = await apiFetch(ENDPOINTS.issues.create(projectId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
@@ -50,18 +44,9 @@ export async function createIssue(projectId: number, data: CreateIssueRequest): 
 
 // Получение задач проекта по спринту
 export async function getIssuesBySprint(projectId: number, sprintId: number): Promise<IssueApiResponse[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.issues.bySprint(projectId, sprintId), {
+    const res = await apiFetch(ENDPOINTS.issues.bySprint(projectId, sprintId), {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
@@ -88,18 +73,9 @@ export async function getIssuesBySprint(projectId: number, sprintId: number): Pr
 
 // Получение всех задач проекта
 export async function getIssues(projectId: number): Promise<IssueApiResponse[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.issues.list(projectId), {
+    const res = await apiFetch(ENDPOINTS.issues.list(projectId), {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
@@ -126,30 +102,101 @@ export async function getIssues(projectId: number): Promise<IssueApiResponse[]> 
 
 // Обновление задачи
 export async function updateIssue(projectId: number, issueId: number, data: UpdateIssueRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
+  const url = ENDPOINTS.issues.update(projectId, issueId);
   
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
+  // Проверяем, что ID валидны
+  if (!projectId || !issueId) {
+    throw new Error(`Некорректные ID: projectId=${projectId}, issueId=${issueId}`);
   }
 
+  // Валидация обязательных полей
+  if (!data.title || !data.description || !data.type) {
+    throw new Error("Обязательные поля не заполнены: title, description, type");
+  }
+
+  // Удаляем пустые строки и undefined значения из данных
+  const cleanData: any = {
+    title: data.title.trim(),
+    description: data.description.trim(),
+    type: data.type,
+  };
+
+  if (data.status) {
+    cleanData.status = data.status;
+  }
+  if (data.priority) {
+    cleanData.priority = data.priority;
+  }
+  if (data.assigneeEmail && data.assigneeEmail.trim() !== '') {
+    cleanData.assigneeEmail = data.assigneeEmail.trim();
+  }
+  if (data.startDate && data.startDate.trim() !== '') {
+    cleanData.startDate = data.startDate.trim();
+  }
+  if (data.endDate && data.endDate.trim() !== '') {
+    cleanData.endDate = data.endDate.trim();
+  }
+  if (data.sprintId !== undefined && data.sprintId !== null && !isNaN(Number(data.sprintId))) {
+    cleanData.sprintId = Number(data.sprintId);
+  }
+
+  logger.info("Обновление задачи", { 
+    url, 
+    projectId, 
+    issueId, 
+    originalData: data,
+    cleanData 
+  });
+
   try {
-    const res = await fetch(ENDPOINTS.issues.update(projectId, issueId), {
+    const res = await apiFetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     });
 
     if (!res.ok) {
       let errorMessage = "Ошибка обновления задачи";
+      let errorBody = null;
       
       try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
+        errorBody = await res.json();
+        errorMessage = errorBody.message || errorBody.error || errorMessage;
       } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+        // Пытаемся получить текст ошибки
+        try {
+          const text = await res.text();
+          if (text) {
+            errorBody = { raw: text };
+            errorMessage = text || errorMessage;
+          }
+        } catch {
+          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+        }
+      }
+      
+      logger.error("Ошибка обновления задачи", { 
+        status: res.status, 
+        statusText: res.statusText,
+        url,
+        projectId,
+        issueId,
+        requestData: cleanData,
+        errorBody
+      });
+      
+      // Более информативное сообщение для 404
+      if (res.status === 404) {
+        if (errorBody?.raw && errorBody.raw.toLowerCase().includes('user')) {
+          errorMessage = `Пользователь не найден. ${errorBody.raw}`;
+        } else {
+          errorMessage = `Задача с ID ${issueId} не найдена в проекте ${projectId}. Возможно, она была удалена или не существует.`;
+          if (errorBody?.message) {
+            errorMessage = errorBody.message;
+          }
+        }
       }
       
       throw new Error(errorMessage);
@@ -164,29 +211,47 @@ export async function updateIssue(projectId: number, issueId: number, data: Upda
 
 // Удаление задачи
 export async function deleteIssue(projectId: number, issueId: number): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
+  // Проверяем, что ID валидны
+  if (!projectId || !issueId || isNaN(projectId) || isNaN(issueId)) {
+    throw new Error(`Некорректные ID: projectId=${projectId}, issueId=${issueId}`);
   }
 
+  const url = ENDPOINTS.issues.delete(projectId, issueId);
+  logger.info("Удаление задачи", { url, projectId, issueId });
+
   try {
-    const res = await fetch(ENDPOINTS.issues.delete(projectId, issueId), {
+    const res = await apiFetch(url, {
       method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
       let errorMessage = "Ошибка удаления задачи";
+      let errorBody = null;
       
       try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
+        errorBody = await res.json();
+        errorMessage = errorBody.message || errorBody.error || errorMessage;
       } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+        // Пытаемся получить текст ошибки
+        try {
+          const text = await res.text();
+          if (text) {
+            errorBody = { raw: text };
+            errorMessage = text || errorMessage;
+          }
+        } catch {
+          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+        }
       }
+      
+      logger.error("Ошибка удаления задачи", { 
+        status: res.status, 
+        statusText: res.statusText,
+        url,
+        projectId,
+        issueId,
+        errorBody
+      });
       
       throw new Error(errorMessage);
     }
@@ -204,18 +269,9 @@ export async function changeIssueStatus(
   issueId: number, 
   action: 'test' | 'progress' | 'done' | 'open'
 ): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.issues.changeStatus(projectId, issueId, action), {
+    const res = await apiFetch(ENDPOINTS.issues.changeStatus(projectId, issueId, action), {
       method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
@@ -240,23 +296,16 @@ export async function changeIssueStatus(
 
 // Поиск задач
 export async function searchIssues(projectId: number, data: SearchIssuesRequest): Promise<Issue[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
     const queryParams = new URLSearchParams();
     if (data.status) queryParams.append('status', data.status);
     if (data.assigneeEmail) queryParams.append('assigneeEmail', data.assigneeEmail);
     if (data.sprintId) queryParams.append('sprintId', data.sprintId.toString());
 
-    const res = await fetch(ENDPOINTS.issues.search(projectId), {
+    const res = await apiFetch(ENDPOINTS.issues.search(projectId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
@@ -285,21 +334,12 @@ export async function searchIssues(projectId: number, data: SearchIssuesRequest)
 
 // Получение истории изменений задачи
 export async function getIssueHistory(projectId: number, issueId: number): Promise<IssueHistory[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   const url = ENDPOINTS.issues.history(projectId, issueId);
   logger.info("Запрос истории задачи", { url, projectId, issueId });
 
   try {
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {

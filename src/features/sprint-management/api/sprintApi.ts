@@ -1,5 +1,5 @@
 import { ENDPOINTS } from "@/shared/config/api";
-import { StorageService } from "@/shared/services/storageService";
+import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
 import { 
   Sprint, 
@@ -9,18 +9,11 @@ import {
 
 // Создание спринта
 export async function createSprint(projectId: number, data: CreateSprintRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.sprints.create(projectId), {
+    const res = await apiFetch(ENDPOINTS.sprints.create(projectId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify({
         name: data.name,
@@ -51,18 +44,9 @@ export async function createSprint(projectId: number, data: CreateSprintRequest)
 
 // Получение спринтов проекта
 export async function getSprints(projectId: number): Promise<Sprint[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.sprints.list(projectId), {
+    const res = await apiFetch(ENDPOINTS.sprints.list(projectId), {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
@@ -89,18 +73,11 @@ export async function getSprints(projectId: number): Promise<Sprint[]> {
 
 // Обновление спринта
 export async function updateSprint(projectId: number, sprintId: number, data: UpdateSprintRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
-
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.sprints.update(projectId, sprintId), {
+    const res = await apiFetch(ENDPOINTS.sprints.update(projectId, sprintId), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
@@ -126,21 +103,10 @@ export async function updateSprint(projectId: number, sprintId: number, data: Up
 }
 
 // Удаление спринта
-
-// доработать 
 export async function deleteSprint(projectId: number, sprintId: number): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.sprints.delete(projectId, sprintId), {
+    const res = await apiFetch(ENDPOINTS.sprints.delete(projectId, sprintId), {
       method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {

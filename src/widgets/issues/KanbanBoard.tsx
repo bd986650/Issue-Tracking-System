@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useProjectStore } from '@/entities/project';
 import { useIssueStore } from '@/entities/issue';
 import { Issue, IssueStatus, IssueType, Priority } from '@/entities/issue';
-import { fetchIssues, submitCreateIssue, submitChangeIssueStatus } from '@/features/issue-management';
+import { fetchIssues, submitCreateIssue, submitChangeIssueStatus, submitUpdateIssue, submitDeleteIssue } from '@/features/issue-management';
+import { UpdateIssueRequest } from '@/features/issue-management';
 import { CreateIssueRequest } from '@/features/issue-management';
-import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar, Clock, User } from 'lucide-react';
+import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';
 
@@ -239,7 +240,6 @@ export default function KanbanBoard() {
   const {
     issues,
     setIssues,
-    updateIssue,
     removeIssue
   } = useIssueStore();
 
@@ -345,8 +345,37 @@ export default function KanbanBoard() {
     }
   };
 
-  const handleDeleteIssue = (issueId: number) => {
-    removeIssue(issueId);
+  const handleDeleteIssue = async (issueId: number) => {
+    if (!selectedProject) {
+      setError("Проект не выбран");
+      return;
+    }
+
+    try {
+      const projectId = Number(selectedProject.id);
+      const parsedIssueId = Number(issueId);
+
+      if (isNaN(projectId) || isNaN(parsedIssueId)) {
+        throw new Error(`Некорректные ID: projectId=${projectId}, issueId=${parsedIssueId}`);
+      }
+
+      // Удаляем задачу на сервере
+      await submitDeleteIssue(projectId, parsedIssueId);
+      
+      // Удаляем из локального состояния
+      removeIssue(parsedIssueId);
+      
+      // Перезагружаем список задач для синхронизации
+      await loadIssues();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Ошибка удаления задачи";
+      setError(errorMessage);
+      console.error("Ошибка удаления задачи", {
+        projectId: selectedProject?.id,
+        issueId,
+        error: err
+      });
+    }
   };
 
   const handleSubmitIssue = async (issueData: CreateIssueRequest) => {
@@ -367,21 +396,111 @@ export default function KanbanBoard() {
     description: string;
     type: IssueType;
     status: IssueStatus;
+    sprintId?: number;
   }) => {
-    // Здесь можно добавить API для обновления задачи
-    // Пока используем локальное обновление
-    const updatedIssue = {
-      id: issueData.id,
-      title: issueData.title,
-      description: issueData.description,
-      type: issueData.type,
-      status: issueData.status,
-      projectId: selectedProject.id,
-      priority: "MEDIUM" as Priority,
-      creator: { id: '1', email: 'user@example.com', fullName: 'User' }
-    };
-    updateIssue(updatedIssue);
-    handleCloseEditModal();
+    if (!selectedProject) {
+      setError("Проект не выбран");
+      return;
+    }
+
+    // Проверяем корректность ID
+    if (!issueData.id || !selectedProject.id) {
+      setError(`Некорректные ID: projectId=${selectedProject.id}, issueId=${issueData.id}`);
+      console.error("Некорректные ID при обновлении задачи", {
+        projectId: selectedProject.id,
+        issueId: issueData.id,
+        selectedIssue: selectedIssue
+      });
+      return;
+    }
+
+    try {
+      // Убеждаемся, что ID являются числами
+      const projectId = Number(selectedProject.id);
+      const issueId = Number(issueData.id);
+
+      if (isNaN(projectId) || isNaN(issueId)) {
+        throw new Error(`Некорректные ID: projectId=${projectId}, issueId=${issueId}`);
+      }
+
+      // Находим существующую задачу, чтобы сохранить все её данные
+      // Используем selectedIssue, если он есть (более актуальные данные), иначе ищем в списке
+      let existingIssue = selectedIssue && selectedIssue.id === issueId 
+        ? selectedIssue 
+        : issues.find(i => i.id === issueId);
+      
+      if (!existingIssue) {
+        // Попробуем перезагрузить задачи, возможно данные устарели
+        console.warn("Задача не найдена в локальном списке, перезагружаем данные...");
+        await loadIssues();
+        existingIssue = issues.find(i => i.id === issueId);
+        if (!existingIssue) {
+          throw new Error(`Задача с ID ${issueId} не найдена в проекте ${projectId}. Возможно, она была удалена.`);
+        }
+      }
+
+      // Формируем объект обновления с сохранением всех существующих данных
+      const updateData: UpdateIssueRequest = {
+        title: issueData.title.trim(),
+        description: issueData.description.trim(),
+        type: issueData.type,
+        status: issueData.status,
+        // Сохраняем существующие данные, которые не редактируются в модалке
+        priority: existingIssue.priority,
+      };
+
+      // Сохраняем assigneeEmail из существующей задачи, если она была назначена
+      if (existingIssue.assignee?.email) {
+        updateData.assigneeEmail = existingIssue.assignee.email;
+      }
+
+      // Сохраняем даты из существующей задачи, если они есть и не пустые
+      if (existingIssue.startDate && existingIssue.startDate.trim() !== '') {
+        updateData.startDate = existingIssue.startDate.trim();
+      }
+      if (existingIssue.endDate && existingIssue.endDate.trim() !== '') {
+        updateData.endDate = existingIssue.endDate.trim();
+      }
+
+      // Добавляем sprintId если он указан (из формы или из существующей задачи)
+      const sprintId = issueData.sprintId !== undefined ? issueData.sprintId : existingIssue.sprint?.id;
+      if (sprintId !== undefined && sprintId !== null && !isNaN(Number(sprintId))) {
+        updateData.sprintId = Number(sprintId);
+      }
+
+      console.log("Обновление задачи - детали", {
+        projectId,
+        issueId,
+        selectedProject: {
+          id: selectedProject.id,
+          name: selectedProject.name
+        },
+        existingIssue: {
+          id: existingIssue.id,
+          title: existingIssue.title,
+          assignee: existingIssue.assignee?.email,
+          priority: existingIssue.priority,
+          sprintId: existingIssue.sprint?.id,
+          status: existingIssue.status,
+          startDate: existingIssue.startDate,
+          endDate: existingIssue.endDate
+        },
+        updateData,
+        url: `PUT /api/projects/${projectId}/issues/${issueId}`
+      });
+
+      await submitUpdateIssue(projectId, issueId, updateData);
+      await loadIssues(); // Перезагружаем данные
+      handleCloseEditModal();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Ошибка обновления задачи";
+      setError(errorMessage);
+      console.error("Ошибка обновления задачи", {
+        projectId: selectedProject.id,
+        issueId: issueData.id,
+        error: err
+      });
+    }
   };
 
   return (

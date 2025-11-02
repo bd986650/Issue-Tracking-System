@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useProjectStore } from "@/entities/project";
+import { fetchSprints } from "@/features/sprint-management";
+import { Sprint } from "@/entities/sprint";
 import { CreateIssueRequest, IssueType, Priority } from "@/features/issue-management";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import TextInput from "@/shared/ui/inputs/TextInput";
@@ -14,6 +17,7 @@ interface CreateIssueModalProps {
 }
 
 export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIssueModalProps) {
+  const { selectedProject } = useProjectStore();
   const [formData, setFormData] = useState<CreateIssueRequest>({
     title: "",
     description: "",
@@ -23,8 +27,33 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
     endDate: "",
     sprintId: undefined,
   });
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const loadSprints = async () => {
+    if (!selectedProject) {
+      logger.warn("selectedProject не определен при загрузке спринтов");
+      return;
+    }
+    
+    try {
+      const sprintsData = await fetchSprints(selectedProject.id);
+      logger.info("Загружено спринтов", { count: sprintsData.length, sprints: sprintsData });
+      setSprints(sprintsData);
+    } catch (err) {
+      logger.error("Ошибка загрузки спринтов", err);
+      setSprints([]); // Устанавливаем пустой массив при ошибке
+    }
+  };
+
+  // Загрузка спринтов при открытии модального окна
+  useEffect(() => {
+    if (isOpen && selectedProject) {
+      loadSprints();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedProject]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,16 +190,29 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
             />
           </div>
 
-          <TextInput
-            label="ID спринта"
-            type="number"
-            value={formData.sprintId ? formData.sprintId.toString() : ""}
-            onChange={(value) => setFormData(prev => ({ 
-              ...prev, 
-              sprintId: value ? parseInt(value as string) : undefined 
-            }))}
-            placeholder="Введите ID спринта (необязательно)"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Спринт (необязательно)
+            </label>
+            <select
+              value={formData.sprintId || ""}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                sprintId: e.target.value ? parseInt(e.target.value) : undefined 
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Не выбран</option>
+              {sprints.map((sprint, index) => (
+                <option key={sprint.id || `sprint-${index}`} value={sprint.id}>
+                  {sprint.name}
+                </option>
+              ))}
+            </select>
+            {sprints.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1">В проекте пока нет спринтов</p>
+            )}
+          </div>
           
           <div className="flex gap-3 justify-end">
             <UniversalButton

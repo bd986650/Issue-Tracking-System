@@ -1,5 +1,5 @@
 import { ENDPOINTS } from "@/shared/config/api";
-import { StorageService } from "@/shared/services/storageService";
+import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
 import { 
   CreateProjectRequest, 
@@ -9,18 +9,11 @@ import {
 
 // Создание проекта
 export async function createProject(data: CreateProjectRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.projects.create, {
+    const res = await apiFetch(ENDPOINTS.projects.create, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
@@ -47,18 +40,9 @@ export async function createProject(data: CreateProjectRequest): Promise<void> {
 
 // Получение всех проектов
 export async function getProjects(): Promise<ProjectResponse[]> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.projects.list, {
+    const res = await apiFetch(ENDPOINTS.projects.list, {
       method: "GET",
-      headers: { 
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {
@@ -85,18 +69,11 @@ export async function getProjects(): Promise<ProjectResponse[]> {
 
 // Добавление участника в проект
 export async function addProjectMember(projectId: number, data: AddMemberRequest): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.projects.addMember(projectId, data.memberEmail), {
+    const res = await apiFetch(ENDPOINTS.projects.addMember(projectId, data.memberEmail), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(data),
     });
@@ -123,18 +100,9 @@ export async function addProjectMember(projectId: number, data: AddMemberRequest
 
 // Удаление проекта
 export async function deleteProject(projectId: number): Promise<void> {
-  const token = StorageService.getAccessToken();
-  
-  if (!token) {
-    throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
-  }
-
   try {
-    const res = await fetch(ENDPOINTS.projects.delete(projectId), {
+    const res = await apiFetch(ENDPOINTS.projects.delete(projectId), {
       method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
     });
 
     if (!res.ok) {

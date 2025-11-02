@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Issue, IssueType, IssueStatus } from '@/entities/issue';
 import { useProjectStore } from '@/entities/project';
+import { fetchSprints } from '@/features/sprint-management';
+import { Sprint } from '@/entities/sprint';
 import { fetchIssueHistory } from '@/features/issue-management';
 import { IssueHistory } from '@/features/issue-management';
 import { X, Clock, User } from 'lucide-react';
@@ -18,6 +20,7 @@ interface EditIssueModalProps {
     description: string;
     type: IssueType;
     status: IssueStatus;
+    sprintId?: number;
   }) => void;
 }
 
@@ -60,6 +63,8 @@ export default function EditIssueModal({
   const [history, setHistory] = useState<IssueHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+  const [sprintId, setSprintId] = useState<number | undefined>(undefined);
 
   // Обновляем форму при изменении issue
   useEffect(() => {
@@ -68,17 +73,35 @@ export default function EditIssueModal({
       setDescription(issue.description);
       setType(issue.type);
       setStatus(issue.status);
+      setSprintId(issue.sprint?.id);
     }
   }, [issue]);
 
-  // Загрузка истории при открытии панели истории
-  useEffect(() => {
-    if (showHistory && selectedProject && issue) {
-      loadHistory();
+  const loadSprints = async () => {
+    if (!selectedProject) {
+      console.warn("selectedProject не определен при загрузке спринтов");
+      return;
     }
-  }, [showHistory, selectedProject, issue]);
+    
+    try {
+      const sprintsData = await fetchSprints(selectedProject.id);
+      console.log("Загружено спринтов", { count: sprintsData.length, sprints: sprintsData });
+      setSprints(sprintsData);
+    } catch (err) {
+      console.error("Ошибка загрузки спринтов", err);
+      setSprints([]); // Устанавливаем пустой массив при ошибке
+    }
+  };
 
-  const loadHistory = async () => {
+  // Загрузка спринтов при открытии модального окна
+  useEffect(() => {
+    if (isOpen && selectedProject) {
+      loadSprints();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, selectedProject]);
+
+  const loadHistory = useCallback(async () => {
     if (!selectedProject || !issue) return;
 
     try {
@@ -91,7 +114,14 @@ export default function EditIssueModal({
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [selectedProject, issue]);
+
+  // Загрузка истории при открытии панели истории
+  useEffect(() => {
+    if (showHistory && selectedProject && issue) {
+      loadHistory();
+    }
+  }, [showHistory, selectedProject, issue, loadHistory]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +132,8 @@ export default function EditIssueModal({
       title: title.trim(),
       description: description.trim(),
       type,
-      status
+      status,
+      sprintId: sprintId
     });
 
     onClose();
@@ -222,6 +253,28 @@ export default function EditIssueModal({
             </select>
           </div>
 
+          {/* Спринт */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Спринт (необязательно)
+            </label>
+            <select
+              value={sprintId || ""}
+              onChange={(e) => setSprintId(e.target.value ? parseInt(e.target.value) : undefined)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Не выбран</option>
+              {sprints.map((sprint, index) => (
+                <option key={`sprint-${sprint.id}-${index}`} value={sprint.id}>
+                  {sprint.name}
+                </option>
+              ))}
+            </select>
+            {sprints.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1">В проекте пока нет спринтов</p>
+            )}
+          </div>
+
           {/* Проект (только для отображения) */}
           {projectName && (
             <div>
@@ -289,9 +342,9 @@ export default function EditIssueModal({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {history.map((item) => (
+                  {history.map((item, index) => (
                     <div
-                      key={item.id}
+                      key={item.id ? `history-${item.id}` : `history-${index}-${item.changeDate}`}
                       className="border-l-4 border-blue-500 bg-white rounded-r-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between mb-2">
