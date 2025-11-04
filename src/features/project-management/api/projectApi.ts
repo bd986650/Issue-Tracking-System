@@ -1,6 +1,7 @@
 import { ENDPOINTS } from "@/shared/config/api";
 import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
+import { handleApiError } from "@/shared/utils/errorHandler";
 import { 
   CreateProjectRequest, 
   ProjectResponse, 
@@ -19,15 +20,7 @@ export async function createProject(data: CreateProjectRequest): Promise<void> {
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка создания проекта";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка создания проекта");
       throw new Error(errorMessage);
     }
     
@@ -46,15 +39,7 @@ export async function getProjects(): Promise<ProjectResponse[]> {
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка получения проектов";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка получения проектов");
       throw new Error(errorMessage);
     }
 
@@ -79,15 +64,7 @@ export async function addProjectMember(projectId: number, data: AddMemberRequest
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка добавления участника";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка добавления участника");
       throw new Error(errorMessage);
     }
     
@@ -106,15 +83,7 @@ export async function deleteProject(projectId: number): Promise<void> {
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка удаления проекта";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка удаления проекта");
       throw new Error(errorMessage);
     }
     

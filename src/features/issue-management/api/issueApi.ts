@@ -1,14 +1,15 @@
 import { ENDPOINTS } from "@/shared/config/api";
-import { StorageService } from "@/shared/services/storageService";
 import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
+import { handleApiError } from "@/shared/utils/errorHandler";
 import { 
   Issue, 
   CreateIssueRequest, 
   UpdateIssueRequest, 
   SearchIssuesRequest, 
   IssueHistory,
-  IssueApiResponse
+  IssueApiResponse,
+  IssueType
 } from "../model/issueTypes";
 
 // Создание задачи
@@ -23,15 +24,7 @@ export async function createIssue(projectId: number, data: CreateIssueRequest): 
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка создания задачи";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка создания задачи");
       throw new Error(errorMessage);
     }
     
@@ -50,15 +43,7 @@ export async function getIssuesBySprint(projectId: number, sprintId: number): Pr
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка получения задач по спринту";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка получения задач по спринту");
       throw new Error(errorMessage);
     }
 
@@ -79,15 +64,7 @@ export async function getIssues(projectId: number): Promise<IssueApiResponse[]> 
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка получения задач";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка получения задач");
       throw new Error(errorMessage);
     }
 
@@ -115,7 +92,7 @@ export async function updateIssue(projectId: number, issueId: number, data: Upda
   }
 
   // Удаляем пустые строки и undefined значения из данных
-  const cleanData: any = {
+  const cleanData: Partial<UpdateIssueRequest> & { title: string; description: string; type: IssueType } = {
     title: data.title.trim(),
     description: data.description.trim(),
     type: data.type,
@@ -158,22 +135,31 @@ export async function updateIssue(projectId: number, issueId: number, data: Upda
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка обновления задачи";
+      let errorMessage = await handleApiError(res, "Ошибка обновления задачи");
       let errorBody = null;
       
-      try {
-        errorBody = await res.json();
-        errorMessage = errorBody.message || errorBody.error || errorMessage;
-      } catch {
-        // Пытаемся получить текст ошибки
+      // Специальная обработка для 404
+      if (res.status === 404) {
         try {
-          const text = await res.text();
-          if (text) {
-            errorBody = { raw: text };
-            errorMessage = text || errorMessage;
-          }
+          errorBody = await res.clone().json();
         } catch {
-          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
+          try {
+            const text = await res.clone().text();
+            if (text) {
+              errorBody = { raw: text };
+              if (text.toLowerCase().includes('user')) {
+                errorMessage = `Пользователь не найден. ${text}`;
+              } else {
+                errorMessage = `Задача с ID ${issueId} не найдена в проекте ${projectId}. Возможно, она была удалена или не существует.`;
+              }
+            }
+          } catch {
+            errorMessage = `Задача с ID ${issueId} не найдена в проекте ${projectId}. Возможно, она была удалена или не существует.`;
+          }
+        }
+        
+        if (errorBody?.message) {
+          errorMessage = errorBody.message;
         }
       }
       
@@ -186,18 +172,6 @@ export async function updateIssue(projectId: number, issueId: number, data: Upda
         requestData: cleanData,
         errorBody
       });
-      
-      // Более информативное сообщение для 404
-      if (res.status === 404) {
-        if (errorBody?.raw && errorBody.raw.toLowerCase().includes('user')) {
-          errorMessage = `Пользователь не найден. ${errorBody.raw}`;
-        } else {
-          errorMessage = `Задача с ID ${issueId} не найдена в проекте ${projectId}. Возможно, она была удалена или не существует.`;
-          if (errorBody?.message) {
-            errorMessage = errorBody.message;
-          }
-        }
-      }
       
       throw new Error(errorMessage);
     }
@@ -225,32 +199,14 @@ export async function deleteIssue(projectId: number, issueId: number): Promise<v
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка удаления задачи";
-      let errorBody = null;
-      
-      try {
-        errorBody = await res.json();
-        errorMessage = errorBody.message || errorBody.error || errorMessage;
-      } catch {
-        // Пытаемся получить текст ошибки
-        try {
-          const text = await res.text();
-          if (text) {
-            errorBody = { raw: text };
-            errorMessage = text || errorMessage;
-          }
-        } catch {
-          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-        }
-      }
+      const errorMessage = await handleApiError(res, "Ошибка удаления задачи");
       
       logger.error("Ошибка удаления задачи", { 
         status: res.status, 
         statusText: res.statusText,
         url,
         projectId,
-        issueId,
-        errorBody
+        issueId
       });
       
       throw new Error(errorMessage);
@@ -275,15 +231,7 @@ export async function changeIssueStatus(
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка изменения статуса задачи";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка изменения статуса задачи");
       throw new Error(errorMessage);
     }
     
@@ -311,15 +259,7 @@ export async function searchIssues(projectId: number, data: SearchIssuesRequest)
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка поиска задач";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка поиска задач");
       throw new Error(errorMessage);
     }
 
@@ -343,28 +283,7 @@ export async function getIssueHistory(projectId: number, issueId: number): Promi
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка получения истории задачи";
-      
-      // Специальная обработка для 403
-      if (res.status === 403) {
-        errorMessage = "У вас нет доступа к истории этой задачи. Возможно, у вас недостаточно прав.";
-        
-        try {
-          const errorData = await res.json();
-          if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch {
-          // Если не удалось распарсить JSON, используем стандартное сообщение
-        }
-      } else {
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-        }
-      }
+      const errorMessage = await handleApiError(res, "Ошибка получения истории задачи");
       
       logger.error("Ошибка получения истории", { 
         status: res.status, 

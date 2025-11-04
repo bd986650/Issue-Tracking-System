@@ -1,6 +1,7 @@
 import { ENDPOINTS } from "@/shared/config/api";
 import { apiFetch } from "@/shared/services/apiClient";
 import { logger } from "@/shared/utils/logger";
+import { handleApiError } from "@/shared/utils/errorHandler";
 import { 
   Sprint, 
   CreateSprintRequest, 
@@ -23,15 +24,7 @@ export async function createSprint(projectId: number, data: CreateSprintRequest)
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка создания спринта";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка создания спринта");
       throw new Error(errorMessage);
     }
     
@@ -50,15 +43,7 @@ export async function getSprints(projectId: number): Promise<Sprint[]> {
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка получения спринтов";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка получения спринтов");
       throw new Error(errorMessage);
     }
 
@@ -83,15 +68,7 @@ export async function updateSprint(projectId: number, sprintId: number, data: Up
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка обновления спринта";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка обновления спринта");
       throw new Error(errorMessage);
     }
     
@@ -110,15 +87,7 @@ export async function deleteSprint(projectId: number, sprintId: number): Promise
     });
 
     if (!res.ok) {
-      let errorMessage = "Ошибка удаления спринта";
-      
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        errorMessage = `Ошибка ${res.status}: ${res.statusText}`;
-      }
-      
+      const errorMessage = await handleApiError(res, "Ошибка удаления спринта");
       throw new Error(errorMessage);
     }
     

@@ -10,6 +10,7 @@ import { CreateIssueRequest } from '@/features/issue-management';
 import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';
+import Toast from '@/shared/ui/Toast';
 
 // Компонент для красивого отображения даты
 const DateDisplay = ({ date, label }: { date?: string; label?: string }) => {
@@ -247,7 +248,21 @@ export default function KanbanBoard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Array<{ id: string; message: string }>>([]);
+
+  // Функция для добавления ошибки (максимум 3 одновременно)
+  const addError = useCallback((message: string) => {
+    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    setErrors(prev => {
+      const newErrors = [...prev, { id, message }];
+      return newErrors.slice(-3);
+    });
+  }, []);
+
+  // Функция для удаления ошибки
+  const removeError = useCallback((id: string) => {
+    setErrors(prev => prev.filter(e => e.id !== id));
+  }, []);
 
   const loadIssues = useCallback(async () => {
     if (!selectedProject) return;
@@ -257,11 +272,11 @@ export default function KanbanBoard() {
       const issuesData = await fetchIssues(selectedProject.id);
       setIssues(issuesData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка загрузки задач");
+      addError(err instanceof Error ? err.message : "Ошибка загрузки задач");
     } finally {
       setLoading(false);
     }
-  }, [selectedProject, setIssues]);
+  }, [selectedProject, setIssues, addError]);
 
   useEffect(() => {
     if (selectedProject) {
@@ -341,13 +356,13 @@ export default function KanbanBoard() {
       await submitChangeIssueStatus(selectedProject.id, issueId, action);
       await loadIssues(); // Перезагружаем данные
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка изменения статуса");
+      addError(err instanceof Error ? err.message : "Ошибка изменения статуса");
     }
   };
 
   const handleDeleteIssue = async (issueId: number) => {
     if (!selectedProject) {
-      setError("Проект не выбран");
+      addError("Проект не выбран");
       return;
     }
 
@@ -369,7 +384,7 @@ export default function KanbanBoard() {
       await loadIssues();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Ошибка удаления задачи";
-      setError(errorMessage);
+      addError(errorMessage);
       console.error("Ошибка удаления задачи", {
         projectId: selectedProject?.id,
         issueId,
@@ -386,7 +401,7 @@ export default function KanbanBoard() {
       await loadIssues(); // Перезагружаем данные
       handleCloseCreateModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка создания задачи");
+      addError(err instanceof Error ? err.message : "Ошибка создания задачи");
     }
   };
 
@@ -399,13 +414,13 @@ export default function KanbanBoard() {
     sprintId?: number;
   }) => {
     if (!selectedProject) {
-      setError("Проект не выбран");
+      addError("Проект не выбран");
       return;
     }
 
     // Проверяем корректность ID
     if (!issueData.id || !selectedProject.id) {
-      setError(`Некорректные ID: projectId=${selectedProject.id}, issueId=${issueData.id}`);
+      addError(`Некорректные ID: projectId=${selectedProject.id}, issueId=${issueData.id}`);
       console.error("Некорректные ID при обновлении задачи", {
         projectId: selectedProject.id,
         issueId: issueData.id,
@@ -494,7 +509,7 @@ export default function KanbanBoard() {
       handleCloseEditModal();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Ошибка обновления задачи";
-      setError(errorMessage);
+      addError(errorMessage);
       console.error("Ошибка обновления задачи", {
         projectId: selectedProject.id,
         issueId: issueData.id,
@@ -505,11 +520,16 @@ export default function KanbanBoard() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-600">{error}</p>
-        </div>
-      )}
+      {errors.map((error, index) => (
+        <Toast
+          key={error.id}
+          message={error.message}
+          type="error"
+          duration={5000}
+          onClose={() => removeError(error.id)}
+          offset={index * 80} // Смещение для каждого тоста (80px между тостами)
+        />
+      ))}
 
       <div className="flex items-center justify-between">
         <div>

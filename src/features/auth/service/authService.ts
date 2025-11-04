@@ -40,6 +40,27 @@ export async function submitLogin(data: LoginRequest): Promise<LoginResponse> {
       });
       
       logger.success("Пользователь успешно авторизован");
+      
+      // Воспроизведение звука успешной авторизации
+      const authSound = new Audio('/sounds/auth-sound.mp3');
+      authSound.volume = 0.5; // Уменьшаем громкость
+      
+      // Ждем пока звук проиграется перед переходом
+      await new Promise<void>((resolve) => {
+        authSound.play().catch(err => {
+          console.warn('Не удалось воспроизвести звук авторизации:', err);
+          resolve(); // Если ошибка воспроизведения, все равно переходим
+        });
+        
+        authSound.onended = () => {
+          resolve();
+        };
+        
+        // Максимальная задержка 2 секунды на случай если звук не загрузится
+        setTimeout(() => {
+          resolve();
+        }, 2000);
+      });
     }
 
     window.location.href = "/project-selector";
@@ -89,6 +110,27 @@ export async function submitRegisterAndLogin(data: RegisterRequest) {
       });
       
       logger.success("Пользователь зарегистрирован и авторизован");
+      
+      // Воспроизведение звука успешной авторизации
+      const authSound = new Audio('/sounds/auth-sound.mp3');
+      authSound.volume = 0.5; // Уменьшаем громкость
+      
+      // Ждем пока звук проиграется перед переходом
+      await new Promise<void>((resolve) => {
+        authSound.play().catch(err => {
+          console.warn('Не удалось воспроизвести звук авторизации:', err);
+          resolve(); // Если ошибка воспроизведения, все равно переходим
+        });
+        
+        authSound.onended = () => {
+          resolve();
+        };
+        
+        // Максимальная задержка 2 секунды на случай если звук не загрузится
+        setTimeout(() => {
+          resolve();
+        }, 2000);
+      });
     } else {
       logger.error("accessToken отсутствует в ответе", loginRes);
     }
