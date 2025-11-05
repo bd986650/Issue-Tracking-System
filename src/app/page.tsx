@@ -1,22 +1,9 @@
-"use client";
-
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
 import DateFooter from "@/widgets/footers/DateFooter";
-import SmoothFollower from "@/shared/ui/SmoothFollower";
-import { useEffect } from "react";
 
 export default function Home() {
-  useEffect(() => {
-    // Скрываем стандартный курсор только на этой странице
-    document.body.classList.add("cursor-none");
-    return () => {
-      document.body.classList.remove("cursor-none");
-    };
-  }, []);
-
   return (
     <section className="min-h-screen flex flex-col items-center justify-center bg-white text-black text-center px-4">
-      <SmoothFollower />
       <div className="space-y-4">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
           Issue Tracking System
