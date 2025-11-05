@@ -75,6 +75,25 @@ export async function addProjectMember(projectId: number, data: AddMemberRequest
   }
 }
 
+// Удаление участника из проекта
+export async function removeProjectMember(projectId: number, memberEmail: string): Promise<void> {
+  try {
+    const res = await apiFetch(ENDPOINTS.projects.removeMember(projectId, memberEmail), {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const errorMessage = await handleApiError(res, "Ошибка удаления участника");
+      throw new Error(errorMessage);
+    }
+
+    logger.success("Участник успешно удален из проекта", { projectId, memberEmail });
+  } catch (error) {
+    logger.error("Ошибка при удалении участника", error);
+    throw error;
+  }
+}
+
 // Удаление проекта
 export async function deleteProject(projectId: number): Promise<void> {
   try {

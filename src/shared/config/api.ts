@@ -13,6 +13,8 @@ export const ENDPOINTS = {
     delete: (projectId: number) => `${API_BASE_URL}/projects/${projectId}`,
     addMember: (projectId: number, memberEmail: string) => 
       `${API_BASE_URL}/projects/${projectId}/member?memberEmail=${encodeURIComponent(memberEmail)}`,
+    removeMember: (projectId: number, memberEmail: string) => 
+      `${API_BASE_URL}/projects/${projectId}/member?memberEmail=${encodeURIComponent(memberEmail)}`,
   },
   issues: {
     list: (projectId: number) => `${API_BASE_URL}/projects/${projectId}/issues`,

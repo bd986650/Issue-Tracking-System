@@ -26,6 +26,7 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
     startDate: "",
     endDate: "",
     sprintId: undefined,
+    assigneeEmail: undefined,
   });
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,6 +86,9 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
       if (formData.sprintId) {
         submitData.sprintId = formData.sprintId;
       }
+      if (formData.assigneeEmail) {
+        submitData.assigneeEmail = formData.assigneeEmail;
+      }
       
       logger.info("Отправляем данные задачи", submitData);
       
@@ -97,6 +101,7 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
         startDate: "",
         endDate: "",
         sprintId: undefined,
+        assigneeEmail: undefined,
       });
       onClose();
     } catch (err) {
@@ -190,28 +195,58 @@ export default function CreateIssueModal({ isOpen, onClose, onSubmit }: CreateIs
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Спринт (необязательно)
-            </label>
-            <select
-              value={formData.sprintId || ""}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                sprintId: e.target.value ? parseInt(e.target.value) : undefined 
-              }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Не выбран</option>
-              {sprints.map((sprint, index) => (
-                <option key={sprint.id || `sprint-${index}`} value={sprint.id}>
-                  {sprint.name}
-                </option>
-              ))}
-            </select>
-            {sprints.length === 0 && (
-              <p className="text-xs text-gray-500 mt-1">В проекте пока нет спринтов</p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Исполнитель <br /> (необязательно)
+              </label>
+              <select
+                value={formData.assigneeEmail || ""}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  assigneeEmail: e.target.value ? e.target.value : undefined 
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Не назначен</option>
+                {selectedProject && (
+                  <>
+                    <option value={selectedProject.admin.email}>
+                      {selectedProject.admin.fullName} (Админ)
+                    </option>
+                    {selectedProject.members?.map((member) => (
+                      <option key={member.email} value={member.email}>
+                        {member.fullName}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Спринт <br /> (необязательно)
+              </label>
+              <select
+                value={formData.sprintId || ""}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  sprintId: e.target.value ? parseInt(e.target.value) : undefined 
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Не выбран</option>
+                {sprints.map((sprint, index) => (
+                  <option key={sprint.id || `sprint-${index}`} value={sprint.id}>
+                    {sprint.name}
+                  </option>
+                ))}
+              </select>
+              {sprints.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">В проекте пока нет спринтов</p>
+              )}
+            </div>
           </div>
           
           <div className="flex gap-3 justify-end">

@@ -2,6 +2,7 @@ import {
   createProject as createProjectApi,
   getProjects as getProjectsApi,
   addProjectMember as addProjectMemberApi,
+  removeProjectMember as removeProjectMemberApi,
   deleteProject as deleteProjectApi
 } from "../api/projectApi";
 import { CreateProjectRequest, AddMemberRequest } from "../model/projectTypes";
@@ -56,6 +57,18 @@ export async function submitAddProjectMember(projectId: number, data: AddMemberR
     logger.success("Участник успешно добавлен", { projectId, memberEmail: data.memberEmail });
   } catch (err: unknown) {
     logger.error("Ошибка добавления участника", err);
+    if (err instanceof Error) throw err;
+    throw new Error("Серверная ошибка, попробуйте позже");
+  }
+}
+
+// Удаление участника из проекта
+export async function submitRemoveProjectMember(projectId: number, memberEmail: string): Promise<void> {
+  try {
+    await removeProjectMemberApi(projectId, memberEmail);
+    logger.success("Участник успешно удален", { projectId, memberEmail });
+  } catch (err: unknown) {
+    logger.error("Ошибка удаления участника", err);
     if (err instanceof Error) throw err;
     throw new Error("Серверная ошибка, попробуйте позже");
   }

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProjectStore } from "@/entities/project";
 import { ProjectBaseUser } from "@/entities/project";
-import { submitDeleteProject } from "@/features/project-management";
+import { submitDeleteProject, submitRemoveProjectMember } from "@/features/project-management";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
-import { UserPlus, Users, Trash2 } from "lucide-react";
+import { UserPlus, Users, Trash2, X } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
 
 export default function ProjectInfo() {
@@ -14,6 +14,7 @@ export default function ProjectInfo() {
   const router = useRouter();
   const [showAddMember, setShowAddMember] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [removingMemberEmail, setRemovingMemberEmail] = useState<string | null>(null);
 
   if (!selectedProject) return null;
 
@@ -51,6 +52,31 @@ export default function ProjectInfo() {
     } catch (error) {
       alert(error instanceof Error ? error.message : "Ошибка при удалении проекта");
       setIsDeleting(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberEmail: string) => {
+    if (!selectedProject?.id) return;
+
+    const confirmed = window.confirm(
+      `Удалить участника ${memberEmail} из проекта "${selectedProject.name}"?`
+    );
+    if (!confirmed) return;
+
+    try {
+      setRemovingMemberEmail(memberEmail);
+      await submitRemoveProjectMember(selectedProject.id, memberEmail);
+
+      // Обновляем локально состояние выбранного проекта
+      const updatedMembers = (selectedProject.members || []).filter((m) => {
+        const email = typeof m === 'string' ? m : m.email;
+        return email !== memberEmail;
+      });
+      setSelectedProject({ ...selectedProject, members: updatedMembers });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Ошибка при удалении участника");
+    } finally {
+      setRemovingMemberEmail(null);
     }
   };
 
@@ -118,6 +144,18 @@ export default function ProjectInfo() {
                     {/* ({memberRoles && Array.isArray(memberRoles) ? memberRoles.join(', ') : 'Участник'}) */}
                     Участник
                   </span>
+                  <div className="ml-auto">
+                    <UniversalButton
+                      variant="outline"
+                      className="text-red-600 border-red-300 hover:bg-red-50 p-1 h-6 w-6 flex items-center justify-center"
+                      onClick={() => handleRemoveMember(memberEmail)}
+                      disabled={removingMemberEmail === memberEmail}
+                      aria-label="Удалить участника"
+                      title="Удалить участника"
+                    >
+                      <X size={14} />
+                    </UniversalButton>
+                  </div>
                 </div>
               );
             }) : (

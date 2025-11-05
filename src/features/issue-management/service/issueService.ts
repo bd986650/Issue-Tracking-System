@@ -148,9 +148,35 @@ export async function submitSearchIssues(projectId: number, data: SearchIssuesRe
 // Получение истории задачи
 export async function fetchIssueHistory(projectId: number, issueId: number): Promise<IssueHistory[]> {
   try {
-    const history = await getIssueHistoryApi(projectId, issueId);
-    logger.success("История задачи загружена", { projectId, issueId, count: history.length });
-    return history;
+    const raw = await getIssueHistoryApi(projectId, issueId);
+
+    // Унификация ответа: поддерживаем как старый формат, так и новый (fieldName/changedAt/changedBy as string)
+    const mapped: IssueHistory[] = (raw as any[]).map((item: any, idx: number) => {
+      // Новый формат
+      if (item && typeof item === 'object' && 'fieldName' in item) {
+        const email: string = String(item.changedBy || 'unknown@example.com');
+        const fullName = email.includes('@') ? email.split('@')[0] : email;
+        return {
+          id: item.id ?? idx + 1,
+          issueId: issueId,
+          changedBy: {
+            id: email,
+            email,
+            fullName,
+          },
+          changeType: String(item.fieldName || ''),
+          oldValue: String(item.oldValue ?? ''),
+          newValue: String(item.newValue ?? ''),
+          changeDate: String(item.changedAt ?? ''),
+          description: String(item.description ?? ''),
+        } as IssueHistory;
+      }
+      // Старый формат соответствует IssueHistory
+      return item as IssueHistory;
+    });
+
+    logger.success("История задачи загружена", { projectId, issueId, count: mapped.length });
+    return mapped;
   } catch (err: unknown) {
     logger.error("Ошибка загрузки истории задачи", err);
     if (err instanceof Error) throw err;

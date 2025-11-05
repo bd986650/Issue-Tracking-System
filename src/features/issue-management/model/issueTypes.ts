@@ -33,6 +33,7 @@ export interface CreateIssueRequest {
   description: string;
   type: IssueType;
   priority?: Priority;
+  assigneeEmail?: string;
   startDate?: string;
   endDate?: string;
   sprintId?: number;

@@ -270,7 +270,43 @@ export default function KanbanBoard() {
     try {
       setLoading(true);
       const issuesData = await fetchIssues(selectedProject.id);
-      setIssues(issuesData);
+      
+      // Обновляем fullName для assignee и creator из данных проекта
+      const enrichedIssues = issuesData.map(issue => {
+        const enrichedIssue = { ...issue };
+        
+        // Обновляем ФИО исполнителя из проекта
+        if (issue.assignee?.email) {
+          const assigneeMember = selectedProject.members?.find(m => m.email === issue.assignee?.email);
+          const assigneeAdmin = selectedProject.admin.email === issue.assignee.email ? selectedProject.admin : null;
+          const assigneeData = assigneeMember || assigneeAdmin;
+          
+          if (assigneeData && enrichedIssue.assignee) {
+            enrichedIssue.assignee = {
+              ...enrichedIssue.assignee,
+              fullName: assigneeData.fullName
+            };
+          }
+        }
+        
+        // Обновляем ФИО создателя из проекта
+        if (issue.creator?.email) {
+          const creatorMember = selectedProject.members?.find(m => m.email === issue.creator?.email);
+          const creatorAdmin = selectedProject.admin.email === issue.creator.email ? selectedProject.admin : null;
+          const creatorData = creatorMember || creatorAdmin;
+          
+          if (creatorData) {
+            enrichedIssue.creator = {
+              ...enrichedIssue.creator,
+              fullName: creatorData.fullName
+            };
+          }
+        }
+        
+        return enrichedIssue;
+      });
+      
+      setIssues(enrichedIssues);
     } catch (err) {
       addError(err instanceof Error ? err.message : "Ошибка загрузки задач");
     } finally {
@@ -464,8 +500,16 @@ export default function KanbanBoard() {
         priority: existingIssue.priority,
       };
 
-      // Сохраняем assigneeEmail из существующей задачи, если она была назначена
-      if (existingIssue.assignee?.email) {
+      // Используем assigneeEmail из формы, если он указан, иначе сохраняем существующий или не указываем
+      if (issueData.assigneeEmail !== undefined) {
+        // Если assigneeEmail пустая строка или null, не добавляем поле (оставляем без исполнителя)
+        if (issueData.assigneeEmail && issueData.assigneeEmail.trim() !== '') {
+          updateData.assigneeEmail = issueData.assigneeEmail.trim();
+        }
+        // Если issueData.assigneeEmail пустое или undefined, не добавляем поле в updateData
+        // Это позволит серверу обработать удаление назначения, если API поддерживает
+      } else if (existingIssue.assignee?.email) {
+        // Если в форме не указан новый исполнитель, сохраняем существующего
         updateData.assigneeEmail = existingIssue.assignee.email;
       }
 
