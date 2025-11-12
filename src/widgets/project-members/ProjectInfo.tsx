@@ -151,7 +151,6 @@ export default function ProjectInfo() {
                       onClick={() => handleRemoveMember(memberEmail)}
                       disabled={removingMemberEmail === memberEmail}
                       aria-label="Удалить участника"
-                      title="Удалить участника"
                     >
                       <X size={14} />
                     </UniversalButton>

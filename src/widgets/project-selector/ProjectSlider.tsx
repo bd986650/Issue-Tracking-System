@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Project } from "@/entities/project";
 import UniversalButton from "@/shared/ui/Buttons/UniversalButton";
@@ -14,6 +14,20 @@ export default function ProjectSlider({ projects, onSelectProject }: ProjectSlid
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const goToPrevious = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev - 1 + projects.length) % projects.length);
+    setTimeout(() => setIsTransitioning(false), 500);
+  }, [isTransitioning, projects.length]);
+
+  const goToNext = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev + 1) % projects.length);
+    setTimeout(() => setIsTransitioning(false), 500);
+  }, [isTransitioning, projects.length]);
+
   // Автопрокрутка
   useEffect(() => {
     if (projects.length <= 1) return;
@@ -21,21 +35,7 @@ export default function ProjectSlider({ projects, onSelectProject }: ProjectSlid
       goToNext();
     }, 5000);
     return () => clearInterval(interval);
-  }, [projects.length, currentIndex]);
-
-  const goToPrevious = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + projects.length) % projects.length);
-    setTimeout(() => setIsTransitioning(false), 500);
-  };
-
-  const goToNext = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % projects.length);
-    setTimeout(() => setIsTransitioning(false), 500);
-  };
+  }, [projects.length, goToNext]);
 
   return (
     <div className="relative w-full">

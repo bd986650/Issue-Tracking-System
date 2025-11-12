@@ -1,5 +1,4 @@
 import ProjectInfo from "@/widgets/project-members/ProjectInfo";
-import { ChevronLeft } from "lucide-react";
 
 export default function DashboardPage() {
   return (

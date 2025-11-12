@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useProjectStore } from "@/entities/project";
 import { useSprintStore } from "@/entities/sprint";
 import { useIssueStore } from "@/entities/issue";
+import { fetchIssuesBySprint } from "@/features/issue-management";
 import { submitCreateSprint } from "@/features/sprint-management";
 import { fetchSprints } from "@/features/sprint-management";
 import { CreateSprintRequest } from "@/entities/sprint";
@@ -18,6 +19,7 @@ export default function SprintsPage() {
   const { selectedProject } = useProjectStore();
   const { sprints, setSprints } = useSprintStore();
   const { issues } = useIssueStore();
+  const [issuesForSprint, setIssuesForSprint] = useState(issues);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -55,9 +57,21 @@ export default function SprintsPage() {
     }
   };
 
-  const handleViewSprint = (sprint: Sprint) => {
+  const handleViewSprint = async (sprint: Sprint) => {
     setSelectedSprint(sprint);
     setShowDetailsModal(true);
+    try {
+      if (!selectedProject || sprint?.id == null) return;
+      const projectIdNum = Number(selectedProject.id);
+      const sprintIdNum = Number(sprint.id);
+      if (isNaN(projectIdNum) || isNaN(sprintIdNum)) return;
+      if (String(sprint.id) === 'undefined') return;
+      const loaded = await fetchIssuesBySprint(projectIdNum, sprintIdNum);
+        setIssuesForSprint(loaded);
+    } catch {
+      // Fallback: если не удалось загрузить по спринту, используем все задачи из стора
+      setIssuesForSprint(issues);
+    }
   };
 
   const handleCloseDetailsModal = () => {
@@ -132,7 +146,7 @@ export default function SprintsPage() {
           isOpen={showDetailsModal}
           onClose={handleCloseDetailsModal}
           sprint={selectedSprint}
-          issues={issues}
+          issues={issuesForSprint.length ? issuesForSprint : issues}
         />
       </div>
     </div>

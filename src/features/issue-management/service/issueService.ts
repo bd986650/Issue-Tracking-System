@@ -145,30 +145,42 @@ export async function submitSearchIssues(projectId: number, data: SearchIssuesRe
   }
 }
 
+// Тип для нового формата истории с сервера
+interface IssueHistoryApiResponse {
+  id?: number;
+  fieldName?: string;
+  oldValue?: string;
+  newValue?: string;
+  changedBy?: string;
+  changedAt?: string;
+  description?: string;
+}
+
 // Получение истории задачи
 export async function fetchIssueHistory(projectId: number, issueId: number): Promise<IssueHistory[]> {
   try {
     const raw = await getIssueHistoryApi(projectId, issueId);
 
     // Унификация ответа: поддерживаем как старый формат, так и новый (fieldName/changedAt/changedBy as string)
-    const mapped: IssueHistory[] = (raw as any[]).map((item: any, idx: number) => {
+    const mapped: IssueHistory[] = (raw as (IssueHistory | IssueHistoryApiResponse)[]).map((item: IssueHistory | IssueHistoryApiResponse, idx: number) => {
       // Новый формат
       if (item && typeof item === 'object' && 'fieldName' in item) {
-        const email: string = String(item.changedBy || 'unknown@example.com');
+        const newFormatItem = item as IssueHistoryApiResponse;
+        const email: string = String(newFormatItem.changedBy || 'unknown@example.com');
         const fullName = email.includes('@') ? email.split('@')[0] : email;
         return {
-          id: item.id ?? idx + 1,
+          id: newFormatItem.id ?? idx + 1,
           issueId: issueId,
           changedBy: {
             id: email,
             email,
             fullName,
           },
-          changeType: String(item.fieldName || ''),
-          oldValue: String(item.oldValue ?? ''),
-          newValue: String(item.newValue ?? ''),
-          changeDate: String(item.changedAt ?? ''),
-          description: String(item.description ?? ''),
+          changeType: String(newFormatItem.fieldName || ''),
+          oldValue: String(newFormatItem.oldValue ?? ''),
+          newValue: String(newFormatItem.newValue ?? ''),
+          changeDate: String(newFormatItem.changedAt ?? ''),
+          description: String(newFormatItem.description ?? ''),
         } as IssueHistory;
       }
       // Старый формат соответствует IssueHistory

@@ -55,7 +55,7 @@ export async function apiFetch(
   options: RequestInit = {}
 ): Promise<Response> {
   // Получаем текущий токен
-  let token = StorageService.getAccessToken();
+  const token = StorageService.getAccessToken();
 
   // Если токена нет, выбрасываем ошибку (кроме запросов на refresh, login, register)
   if (!token && !url.includes('/auth/refresh') && !url.includes('/auth/login') && !url.includes('/auth/register')) {
