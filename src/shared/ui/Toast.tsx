@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
+import { logger } from '@/shared/utils/logger';
 
 export type ToastType = 'error' | 'success' | 'info' | 'warning';
 
@@ -30,7 +31,7 @@ export default function Toast({ message, type = 'error', duration = 5000, onClos
       const errorSound = new Audio('/sounds/error-sound.mp3');
       errorSound.volume = 0.5; // Уменьшаем громкость
       errorSound.play().catch(err => {
-        console.warn('Не удалось воспроизвести звук ошибки:', err);
+        logger.warn('Не удалось воспроизвести звук ошибки', err);
       });
     }
 

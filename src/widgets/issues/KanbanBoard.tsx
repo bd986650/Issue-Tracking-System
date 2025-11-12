@@ -11,6 +11,7 @@ import { Plus, Bug, Zap, AlertCircle, Trash2, Calendar } from 'lucide-react';
 import CreateIssueModal from './CreateIssueModal';
 import EditIssueModal from './EditIssueModal';
 import Toast from '@/shared/ui/Toast';
+import { logger } from '@/shared/utils/logger';
 
 // Компонент для красивого отображения даты
 const DateDisplay = ({ date, label }: { date?: string; label?: string }) => {
@@ -421,7 +422,7 @@ export default function KanbanBoard() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Ошибка удаления задачи";
       addError(errorMessage);
-      console.error("Ошибка удаления задачи", {
+      logger.error("Ошибка удаления задачи", {
         projectId: selectedProject?.id,
         issueId,
         error: err
@@ -458,7 +459,7 @@ export default function KanbanBoard() {
     // Проверяем корректность ID
     if (!issueData.id || !selectedProject.id) {
       addError(`Некорректные ID: projectId=${selectedProject.id}, issueId=${issueData.id}`);
-      console.error("Некорректные ID при обновлении задачи", {
+      logger.error("Некорректные ID при обновлении задачи", {
         projectId: selectedProject.id,
         issueId: issueData.id,
         selectedIssue: selectedIssue
@@ -483,7 +484,7 @@ export default function KanbanBoard() {
       
       if (!existingIssue) {
         // Попробуем перезагрузить задачи, возможно данные устарели
-        console.warn("Задача не найдена в локальном списке, перезагружаем данные...");
+        logger.warn("Задача не найдена в локальном списке, перезагружаем данные...");
         await loadIssues();
         existingIssue = issues.find(i => i.id === issueId);
         if (!existingIssue) {
@@ -528,7 +529,7 @@ export default function KanbanBoard() {
         updateData.sprintId = Number(sprintId);
       }
 
-      console.log("Обновление задачи - детали", {
+      logger.debug("Обновление задачи - детали", {
         projectId,
         issueId,
         selectedProject: {
@@ -555,7 +556,7 @@ export default function KanbanBoard() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Ошибка обновления задачи";
       addError(errorMessage);
-      console.error("Ошибка обновления задачи", {
+      logger.error("Ошибка обновления задачи", {
         projectId: selectedProject.id,
         issueId: issueData.id,
         error: err

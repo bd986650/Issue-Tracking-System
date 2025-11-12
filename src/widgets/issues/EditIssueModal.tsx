@@ -9,6 +9,7 @@ import { fetchIssueHistory } from '@/features/issue-management';
 import { IssueHistory } from '@/features/issue-management';
 import { X, Clock } from 'lucide-react';
 import IssueHistoryPanel from './IssueHistoryPanel';
+import { logger } from '@/shared/utils/logger';
 
 interface EditIssueModalProps {
   isOpen: boolean;
@@ -61,16 +62,16 @@ export default function EditIssueModal({
 
   const loadSprints = async () => {
     if (!selectedProject) {
-      console.warn("selectedProject не определен при загрузке спринтов");
+      logger.warn("selectedProject не определен при загрузке спринтов");
       return;
     }
     
     try {
       const sprintsData = await fetchSprints(selectedProject.id);
-      console.log("Загружено спринтов", { count: sprintsData.length, sprints: sprintsData });
+      logger.info("Загружено спринтов", { count: sprintsData.length, sprints: sprintsData });
       setSprints(sprintsData);
     } catch (err) {
-      console.error("Ошибка загрузки спринтов", err);
+      logger.error("Ошибка загрузки спринтов", err);
       setSprints([]); // Устанавливаем пустой массив при ошибке
     }
   };

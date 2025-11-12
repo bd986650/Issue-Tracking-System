@@ -48,7 +48,7 @@ export async function submitLogin(data: LoginRequest): Promise<LoginResponse> {
       // Ждем пока звук проиграется перед переходом
       await new Promise<void>((resolve) => {
         authSound.play().catch(err => {
-          console.warn('Не удалось воспроизвести звук авторизации:', err);
+          logger.warn('Не удалось воспроизвести звук авторизации', err);
           resolve(); // Если ошибка воспроизведения, все равно переходим
         });
         
@@ -118,7 +118,7 @@ export async function submitRegisterAndLogin(data: RegisterRequest) {
       // Ждем пока звук проиграется перед переходом
       await new Promise<void>((resolve) => {
         authSound.play().catch(err => {
-          console.warn('Не удалось воспроизвести звук авторизации:', err);
+          logger.warn('Не удалось воспроизвести звук авторизации', err);
           resolve(); // Если ошибка воспроизведения, все равно переходим
         });
         
