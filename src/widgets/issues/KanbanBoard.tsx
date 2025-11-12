@@ -448,6 +448,7 @@ export default function KanbanBoard() {
     type: IssueType;
     status: IssueStatus;
     sprintId?: number;
+    assigneeEmail?: string;
   }) => {
     if (!selectedProject) {
       addError("Проект не выбран");
