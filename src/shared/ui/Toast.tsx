@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
 import { logger } from '@/shared/utils/logger';
+import { TIME_INTERVALS } from '@/shared/constants';
 
 export type ToastType = 'error' | 'success' | 'info' | 'warning';
 
@@ -22,7 +23,7 @@ export default function Toast({ message, type = 'error', duration = 5000, onClos
     setIsExiting(true);
     setTimeout(() => {
       onClose();
-    }, 500); // Время анимации исчезания (должно совпадать с duration в transition)
+    }, TIME_INTERVALS.ANIMATION_TIMEOUT); // Время анимации исчезания (должно совпадать с duration в transition)
   }, [onClose]);
 
   useEffect(() => {
